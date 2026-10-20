@@ -9,6 +9,7 @@ without extracting anything to disk.
 
 from __future__ import annotations
 
+import atexit
 import dataclasses
 import datetime as dt
 import io
@@ -177,6 +178,7 @@ class ONSPDRelease:
         item_id: str | None = None,
         timeout: float = 120,
         session: requests.Session | None = None,
+        delete_on_exit: bool = False,
     ) -> None:
         """Initialise.
 
@@ -187,6 +189,7 @@ class ONSPDRelease:
             item_id: Pin a specific release; the latest is used when omitted.
             timeout: HTTP read timeout in seconds.
             session: HTTP session (a retrying one is created when omitted).
+            delete_on_exit: Delete the downloaded zip when the process exits.
         """
         self._api_url = api_url.rstrip("/")
         self._download_dir = download_dir
@@ -194,6 +197,7 @@ class ONSPDRelease:
         self._item_id = item_id
         self._timeout = timeout
         self._session = session or build_session()
+        self._delete_on_exit = delete_on_exit
         self._local_zip: zipfile.ZipFile | None = None
 
     @cached_property
@@ -256,6 +260,10 @@ class ONSPDRelease:
         if self._local_zip is None:
             self.download()
             self._local_zip = zipfile.ZipFile(self.local_path)
+            # The SDK has no hook after the last stream syncs (Tap.sync_all is final),
+            # so the zip is removed when the tap process exits.
+            if self._delete_on_exit:
+                atexit.register(self.cleanup)
         return self._local_zip
 
     def download(self) -> Path:

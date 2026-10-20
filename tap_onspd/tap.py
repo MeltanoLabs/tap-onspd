@@ -60,7 +60,7 @@ class TapONSPD(Tap):
             th.BooleanType(),
             default=False,
             title="Keep download",
-            description="Keep the zip after a successful sync, so later runs can reuse it.",
+            description="Keep the zip after the tap exits, so later runs can reuse it.",
         ),
         th.Property(
             "exclude_countries",
@@ -132,6 +132,7 @@ class TapONSPD(Tap):
             logger=self.logger,
             item_id=self.config.get("item_id"),
             timeout=self.config.get("request_timeout", 120),
+            delete_on_exit=not self.config.get("keep_download", False),
         )
 
     @override
@@ -150,12 +151,6 @@ class TapONSPD(Tap):
             for name, pattern in lookups.items()
         ]
         return streams
-
-    @override
-    def sync_all(self) -> None:
-        super().sync_all()
-        if not self.config.get("keep_download", False):
-            self.release.cleanup()
 
 
 if __name__ == "__main__":

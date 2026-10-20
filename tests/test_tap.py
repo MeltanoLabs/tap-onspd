@@ -10,6 +10,8 @@ from tap_onspd.tap import TapONSPD
 from tests.conftest import ITEM_ID, ITEM_NAME
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     import pytest
 
     from tests.conftest import FakeArcGIS
@@ -45,7 +47,12 @@ def test_discovery_does_not_download(arcgis: FakeArcGIS, config: dict) -> None:
     assert not (Path(config["download_dir"]) / ITEM_NAME).exists()
 
 
-def test_sync_emits_records_and_cleans_up(arcgis: FakeArcGIS, config: dict, capsys: pytest.CaptureFixture[str]) -> None:
+def test_sync_emits_records_and_cleans_up(
+    arcgis: FakeArcGIS,
+    config: dict,
+    capsys: pytest.CaptureFixture[str],
+    exit_hooks: list[Callable[[], None]],
+) -> None:
     messages = run_sync(config, capsys)
 
     postcodes = {r["pcds"]: r for r in records(messages, "postcodes")}
@@ -69,7 +76,11 @@ def test_sync_emits_records_and_cleans_up(arcgis: FakeArcGIS, config: dict, caps
     assert bookmark["replication_key_value"] == MODIFIED_AT
 
     assert arcgis.full_downloads == 1
-    assert not (Path(config["download_dir"]) / ITEM_NAME).exists()
+    zip_path = Path(config["download_dir"]) / ITEM_NAME
+    assert zip_path.exists()
+    assert len(exit_hooks) == 1  # deleted when the tap process exits
+    exit_hooks[0]()
+    assert not zip_path.exists()
 
 
 def test_sync_skips_release_already_loaded(
@@ -98,11 +109,13 @@ def test_keep_download_and_no_country_filter(
     arcgis: FakeArcGIS,  # noqa: ARG001
     config: dict,
     capsys: pytest.CaptureFixture[str],
+    exit_hooks: list[Callable[[], None]],
 ) -> None:
     messages = run_sync({**config, "keep_download": True, "exclude_countries": []}, capsys)
 
     assert len(records(messages, "postcodes")) == 4
     assert (Path(config["download_dir"]) / ITEM_NAME).exists()
+    assert not exit_hooks
 
 
 def test_vintage_suffixes_kept_when_disabled(arcgis: FakeArcGIS, config: dict) -> None:  # noqa: ARG001

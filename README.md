@@ -14,7 +14,7 @@ Each ONSPD release is published as an ArcGIS Online item (owner `ONSGeography_da
    - The zip is downloaded to `download_dir` (default: `tap-onspd` in the system temp directory). It is streamed in 8 MB chunks to `<name>.zip.part`, and an interrupted download resumes with a `Range` request. Once the file is complete and passes a zip check, it is renamed to `<name>.zip`.
    - A zip of the right size that is already in `download_dir` is reused.
    - Rows are then streamed out of the zip one at a time (`zipfile` + `csv`). **Nothing is extracted to disk**, so memory and disk use stay flat.
-4. **Cleanup.** The zip is deleted after a successful sync unless `keep_download` is true.
+4. **Cleanup.** The zip is deleted when the tap exits, whether the sync succeeded or failed, unless `keep_download` is true.
 
 **Release bookmark.** Every record carries `_onspd_modified_at`, the release's last-modified time, which is used as the replication key. When the bookmark already holds the current release, streams emit nothing and the zip is never downloaded. A scheduled run between releases therefore finishes in seconds. Use `force_reload` to load the release again anyway.
 
@@ -51,7 +51,7 @@ Every record also has `_onspd_release` (e.g. `AUG_2026`), `_onspd_item_id` and `
 |:--|:--|:--|
 | `item_id` | latest | ArcGIS item ID of a specific release |
 | `download_dir` | `<tmp>/tap-onspd` | Where the zip is downloaded during a sync |
-| `keep_download` | `false` | Keep the zip after a successful sync |
+| `keep_download` | `false` | Keep the zip after the tap exits, so later runs can reuse it |
 | `exclude_countries` | `["N92000002"]` | Country codes to leave out (default: Northern Ireland, see Licence) |
 | `member_pattern` | `^Data/ONSPD_[A-Z]{3}_\d{4}_UK\.csv$` | Regex for the main CSV in the zip |
 | `lookups` | the six above | Stream name → regex for a `Documents/` CSV (replaces the defaults) |

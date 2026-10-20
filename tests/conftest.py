@@ -12,7 +12,7 @@ import pytest
 import responses
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
     from pathlib import Path
 
 API_URL = "https://arcgis.test/sharing/rest"
@@ -106,3 +106,11 @@ def config(tmp_path: Path) -> dict:
             "wards": r"^Documents/WD .*\.csv$",
         },
     }
+
+
+@pytest.fixture(autouse=True)
+def exit_hooks(monkeypatch: pytest.MonkeyPatch) -> list[Callable[[], None]]:
+    """Capture atexit registrations instead of running them at interpreter exit."""
+    hooks: list[Callable[[], None]] = []
+    monkeypatch.setattr("tap_onspd.release.atexit.register", hooks.append)
+    return hooks
