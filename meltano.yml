@@ -52,20 +52,6 @@ plugins:
     config:
       download_dir: .meltano/tap-onspd
       keep_download: true
-    select:
-    - postcodes.pcds
-    - postcodes.doterm
-    - postcodes.lat
-    - postcodes.long
-    - postcodes.ctry_cd
-    - postcodes.rgn_cd
-    - postcodes.cty_cd
-    - postcodes.lad_cd
-    - postcodes._onspd_*
-    - countries.*
-    - regions.*
-    - counties.*
-    - local_authorities.*
   loaders:
   - name: target-jsonl
     variant: andyh1203
