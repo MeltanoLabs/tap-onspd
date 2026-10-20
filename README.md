@@ -81,11 +81,27 @@ meltano run tap-onspd target-jsonl
 
 ## Licence
 
-The tap is Apache-2.0.
+### The tap
 
-ONSPD data is published under the [Open Government Licence](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/). Attribution: *Contains OS data © Crown copyright and database right; Contains Royal Mail data © Royal Mail copyright and database right; Source: Office for National Statistics licensed under the Open Government Licence v3.0.*
+The tap's code is licensed under Apache-2.0 (see [LICENSE](LICENSE)). This repository contains no ONSPD data: the tap downloads it from ONS each time it runs. The test fixtures contain only a few sample rows.
 
-Northern Ireland postcodes are additionally licensed by Land & Property Services, which restricts commercial use. That is why they are excluded by default. Set `exclude_countries: []` only if your use is covered.
+### ONSPD data
+
+ONSPD is covered by the ONS's own terms, not by the tap's licence. Anyone who loads it with this tap must follow them. The terms below come from section 3 of the ONSPD User Guide (*Licensing Requirements – Copyright and Reproduction*, shipped in the release zip under `User Guide/`) and the [ONS Licences page](https://www.ons.gov.uk/methodology/geography/licences).
+
+- **Licence:** ONS postcode products are derived from Code-Point® Open and published under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/). The data can be re-used free of charge in any format or medium, commercially or not, under the data owners' terms. ONS and data-owner logos are not covered.
+- **Attribution (required).** The following statements must be acknowledged or displayed **wherever the data is used**, including reports, dashboards and apps built on the loaded tables. Use the year of the release you loaded; `_onspd_release` holds it, e.g. `AUG_2026` → 2026.
+
+  > Contains OS data © Crown copyright and database right 2026
+  >
+  > Contains Royal Mail data © Royal Mail copyright and database right 2026
+  >
+  > Source: Office for National Statistics licensed under the Open Government Licence v.3.0
+
+- **Northern Ireland (`BT` postcodes):**
+  - NI data is excluded from the free re-use above. It comes with Land & Property Services' Northern Ireland End User Licence, which allows **internal business use only**, and using it counts as accepting those terms.
+  - **Commercial use requires a separate licence direct from LPS** (see [LPS copyright, licensing and publishing](https://www.finance-ni.gov.uk/articles/lps-copyright-licensing-and-publishing)).
+  - The tap excludes NI by default (`exclude_countries: ["N92000002"]`). Only set `exclude_countries: []` if your use falls within the End User Licence, or you hold an LPS licence.
 
 ## Development
 
