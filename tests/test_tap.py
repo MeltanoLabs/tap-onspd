@@ -95,16 +95,6 @@ def test_sync_skips_release_already_loaded(
     assert arcgis.full_downloads == 0
 
 
-def test_force_reload_ignores_bookmark(arcgis: FakeArcGIS, config: dict, capsys: pytest.CaptureFixture[str]) -> None:
-    bookmark = {"replication_key": "_onspd_modified_at", "replication_key_value": MODIFIED_AT}
-    state = {"bookmarks": {"postcodes": bookmark}}
-
-    messages = run_sync({**config, "force_reload": True}, capsys, state=state)
-
-    assert len(records(messages, "postcodes")) == 3
-    assert arcgis.full_downloads == 1
-
-
 def test_keep_download_and_no_country_filter(
     arcgis: FakeArcGIS,  # noqa: ARG001
     config: dict,

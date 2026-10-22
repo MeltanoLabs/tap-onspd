@@ -40,10 +40,6 @@ plugins:
       kind: boolean
       label: Strip vintage suffixes
       value: true
-    - name: force_reload
-      kind: boolean
-      label: Force reload
-      value: false
     config:
       download_dir: .meltano/tap-onspd
       keep_download: true
