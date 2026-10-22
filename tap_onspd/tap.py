@@ -52,22 +52,6 @@ class TapONSPD(Tap):
             ),
         ),
         th.Property(
-            "download_dir",
-            th.StringType(),
-            title="Download directory",
-            description=(
-                "Directory the release zip (~250 MB) is downloaded to during a sync. "
-                "Defaults to `tap-onspd` in the system temp directory."
-            ),
-        ),
-        th.Property(
-            "keep_download",
-            th.BooleanType(),
-            default=False,
-            title="Keep download",
-            description="Keep the zip after the tap exits, so later runs can reuse it.",
-        ),
-        th.Property(
             "exclude_countries",
             th.ArrayType(th.StringType()),
             default=DEFAULT_EXCLUDE_COUNTRIES,
@@ -131,14 +115,12 @@ class TapONSPD(Tap):
     @cached_property
     def release(self) -> ONSPDRelease:
         """The ONSPD release this run loads."""
-        download_dir = self.config.get("download_dir") or Path(tempfile.gettempdir()) / "tap-onspd"
         return ONSPDRelease(
             api_url=self.config.get("api_url", DEFAULT_API_URL),
-            download_dir=Path(download_dir).expanduser(),
+            download_dir=Path(tempfile.gettempdir()) / "tap-onspd",
             logger=self.logger,
             item_id=self.config.get("item_id"),
             timeout=self.config.get("request_timeout", 120),
-            delete_on_exit=not self.config.get("keep_download", False),
         )
 
     @override

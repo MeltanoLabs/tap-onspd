@@ -101,11 +101,3 @@ def test_download_resumes_partial_file(arcgis: FakeArcGIS, tmp_path: Path) -> No
     assert path.read_bytes() == arcgis.body
     assert arcgis.range_requests == ["bytes=100-"]
     assert arcgis.full_downloads == 0
-
-
-def test_cleanup_deletes_zip(arcgis: FakeArcGIS, tmp_path: Path) -> None:  # noqa: ARG001
-    release = make_release(tmp_path)
-    release.local_zip()
-    assert release.local_path.exists()
-    release.cleanup()
-    assert not release.local_path.exists()

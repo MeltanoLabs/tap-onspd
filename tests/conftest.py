@@ -5,6 +5,7 @@ from __future__ import annotations
 import dataclasses
 import io
 import re
+import tempfile
 import zipfile
 from typing import TYPE_CHECKING
 
@@ -100,11 +101,10 @@ def arcgis() -> Iterator[FakeArcGIS]:
 
 
 @pytest.fixture
-def config(tmp_path: Path) -> dict:
-    """Tap config pointing at the mocked API and a temp download dir."""
+def config() -> dict:
+    """Tap config pointing at the mocked API."""
     return {
         "api_url": API_URL,
-        "download_dir": str(tmp_path / "downloads"),
         "lookups": {
             "regions": r"^Documents/RGN .*\.csv$",
             "wards": r"^Documents/WD .*\.csv$",
@@ -113,8 +113,15 @@ def config(tmp_path: Path) -> dict:
 
 
 @pytest.fixture(autouse=True)
+def download_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Move the system temp directory, where the tap keeps the release zip, into the test's directory."""
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    return tmp_path / "tap-onspd"
+
+
+@pytest.fixture(autouse=True)
 def exit_hooks(monkeypatch: pytest.MonkeyPatch) -> list[Callable[[], None]]:
     """Capture atexit registrations instead of running them at interpreter exit."""
     hooks: list[Callable[[], None]] = []
-    monkeypatch.setattr("tap_onspd.release.atexit.register", hooks.append)
+    monkeypatch.setattr("atexit.register", hooks.append)
     return hooks

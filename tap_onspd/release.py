@@ -3,13 +3,12 @@
 Each ONSPD release is an ArcGIS Online item (owner ``ONSGeography_data``, tag
 ``PRD_ONSPD``) whose data is a ~250 MB zip. Discovery only needs the CSV
 headers, so it reads the zip remotely with HTTP range requests (~1 MB). A sync
-downloads the whole zip once to ``download_dir`` and streams rows out of it
-without extracting anything to disk.
+downloads the whole zip once to ``download_dir``, keeps it for later runs, and
+streams rows out of it without extracting anything to disk.
 """
 
 from __future__ import annotations
 
-import atexit
 import dataclasses
 import datetime as dt
 import io
@@ -178,7 +177,6 @@ class ONSPDRelease:
         item_id: str | None = None,
         timeout: float = 120,
         session: requests.Session | None = None,
-        delete_on_exit: bool = False,
     ) -> None:
         """Initialise.
 
@@ -189,7 +187,6 @@ class ONSPDRelease:
             item_id: Pin a specific release; the latest is used when omitted.
             timeout: HTTP read timeout in seconds.
             session: HTTP session (a retrying one is created when omitted).
-            delete_on_exit: Delete the downloaded zip when the process exits.
         """
         self._api_url = api_url.rstrip("/")
         self._download_dir = download_dir
@@ -197,7 +194,6 @@ class ONSPDRelease:
         self._item_id = item_id
         self._timeout = timeout
         self._session = session or build_session()
-        self._delete_on_exit = delete_on_exit
         self._local_zip: zipfile.ZipFile | None = None
 
     @cached_property
@@ -260,10 +256,6 @@ class ONSPDRelease:
         if self._local_zip is None:
             self.download()
             self._local_zip = zipfile.ZipFile(self.local_path)
-            # The SDK has no hook after the last stream syncs (Tap.sync_all is final),
-            # so the zip is removed when the tap process exits.
-            if self._delete_on_exit:
-                atexit.register(self.cleanup)
         return self._local_zip
 
     def download(self) -> Path:
@@ -307,15 +299,6 @@ class ONSPDRelease:
         part.replace(target)
         self._logger.info("Downloaded %s", target)
         return target
-
-    def cleanup(self) -> None:
-        """Close and delete the downloaded zip."""
-        if self._local_zip is not None:
-            self._local_zip.close()
-            self._local_zip = None
-        if self.local_path.exists():
-            self.local_path.unlink()
-            self._logger.info("Deleted %s", self.local_path)
 
     def _remote_size(self) -> int:
         response = self._session.head(self.download_url, allow_redirects=True, timeout=self._timeout)
