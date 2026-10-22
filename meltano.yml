@@ -44,9 +44,6 @@ plugins:
       kind: boolean
       label: Force reload
       value: false
-    - name: request_timeout
-      kind: integer
-      label: Request timeout
     config:
       download_dir: .meltano/tap-onspd
       keep_download: true

@@ -112,13 +112,6 @@ class TapONSPD(Tap):
             title="Force reload",
             description="Reload the release even if the bookmark shows it was already loaded.",
         ),
-        th.Property(
-            "request_timeout",
-            th.NumberType(),
-            default=120,
-            title="Request timeout",
-            description="HTTP read timeout in seconds.",
-        ),
     ).to_dict()
 
     @cached_property
@@ -130,7 +123,6 @@ class TapONSPD(Tap):
             download_dir=Path(download_dir).expanduser(),
             logger=self.logger,
             item_id=self.config.get("item_id"),
-            timeout=self.config.get("request_timeout", 120),
             delete_on_exit=not self.config.get("keep_download", False),
         )
 
