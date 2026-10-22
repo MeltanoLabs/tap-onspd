@@ -59,7 +59,6 @@ Every record also has `_onspd_release` (e.g. `AUG_2026`), `_onspd_item_id` and `
 | `lookups` | the six above | Stream name → regex for a `Documents/` CSV (replaces the defaults) |
 | `strip_vintage_suffixes` | `true` | Drop the vintage year from column names |
 | `force_reload` | `false` | Ignore the release bookmark |
-| `api_url` | `https://www.arcgis.com/sharing/rest` | ArcGIS sharing REST API |
 | `request_timeout` | `120` | HTTP read timeout (seconds) |
 
 Run `tap-onspd --about` for the full list, including the SDK's built-in settings.
