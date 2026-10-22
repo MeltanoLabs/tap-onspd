@@ -43,15 +43,6 @@ class TapONSPD(Tap):
 
     config_jsonschema = th.PropertiesList(
         th.Property(
-            "item_id",
-            th.StringType(),
-            title="Release item ID",
-            description=(
-                "ArcGIS item ID of a specific ONSPD release to load. "
-                "When omitted, the latest release is found and loaded."
-            ),
-        ),
-        th.Property(
             "download_dir",
             th.StringType(),
             title="Download directory",
@@ -115,7 +106,6 @@ class TapONSPD(Tap):
             api_url=DEFAULT_API_URL,
             download_dir=Path(download_dir).expanduser(),
             logger=self.logger,
-            item_id=self.config.get("item_id"),
             delete_on_exit=not self.config.get("keep_download", False),
         )
 

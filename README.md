@@ -8,7 +8,7 @@ Built with the [Meltano Singer SDK](https://sdk.meltano.com).
 
 Each ONSPD release is published as an ArcGIS Online item (owner `ONSGeography_data`, tag `PRD_ONSPD`). The item's data is a zip of about 250 MB that unzips to about 1.5 GB of CSV.
 
-1. **Finding the release.** The tap asks the ArcGIS search API for the newest ONSPD item, or uses `item_id` if set.
+1. **Finding the release.** The tap asks the ArcGIS search API for the newest ONSPD item.
 2. **Discovery** needs the CSV headers to build schemas. It reads them straight from the remote zip with HTTP range requests, transferring about 1 MB in total. Nothing is downloaded to disk.
 3. **Sync.**
    - The zip is downloaded to `download_dir` (default: `tap-onspd` in the system temp directory). It is streamed in 8 MB chunks to `<name>.zip.part`, and an interrupted download resumes with a `Range` request. Once the file is complete and passes a zip check, it is renamed to `<name>.zip`.
@@ -51,7 +51,6 @@ Every record also has `_onspd_release` (e.g. `AUG_2026`), `_onspd_item_id` and `
 
 | Setting | Default | Description |
 |:--|:--|:--|
-| `item_id` | latest | ArcGIS item ID of a specific release |
 | `download_dir` | `<tmp>/tap-onspd` | Where the zip is downloaded during a sync |
 | `keep_download` | `false` | Keep the zip after the tap exits, so later runs can reuse it |
 | `exclude_countries` | `["N92000002", "L93000001", "M83000003"]` | Country codes to leave out (default: Northern Ireland, see Licence, plus the Channel Islands and Isle of Man) |
