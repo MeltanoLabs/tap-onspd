@@ -112,13 +112,6 @@ class TapONSPD(Tap):
             title="Force reload",
             description="Reload the release even if the bookmark shows it was already loaded.",
         ),
-        th.Property(
-            "api_url",
-            th.StringType(),
-            default=DEFAULT_API_URL,
-            title="ArcGIS API URL",
-            description="ArcGIS Online sharing REST API base URL.",
-        ),
     ).to_dict()
 
     @cached_property
@@ -126,7 +119,7 @@ class TapONSPD(Tap):
         """The ONSPD release this run loads."""
         download_dir = self.config.get("download_dir") or Path(tempfile.gettempdir()) / "tap-onspd"
         return ONSPDRelease(
-            api_url=self.config.get("api_url", DEFAULT_API_URL),
+            api_url=DEFAULT_API_URL,
             download_dir=Path(download_dir).expanduser(),
             logger=self.logger,
             item_id=self.config.get("item_id"),
