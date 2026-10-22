@@ -29,6 +29,11 @@ DEFAULT_LOOKUPS = {
     "constituencies": r"^Documents/PCON .*\.csv$",
 }
 NORTHERN_IRELAND = "N92000002"
+CHANNEL_ISLANDS = "L93000001"
+ISLE_OF_MAN = "M83000003"
+# Northern Ireland postcodes are licensed separately (LPS) and restrict commercial use.
+# The Channel Islands and the Isle of Man are Crown Dependencies, not part of the UK.
+DEFAULT_EXCLUDE_COUNTRIES = [NORTHERN_IRELAND, CHANNEL_ISLANDS, ISLE_OF_MAN]
 
 
 class TapONSPD(Tap):
@@ -65,11 +70,12 @@ class TapONSPD(Tap):
         th.Property(
             "exclude_countries",
             th.ArrayType(th.StringType()),
-            default=[NORTHERN_IRELAND],
+            default=DEFAULT_EXCLUDE_COUNTRIES,
             title="Exclude countries",
             description=(
-                "Country codes whose postcodes are left out. Defaults to Northern Ireland, "
-                "whose postcodes are licensed separately (LPS) and restrict commercial use."
+                "Country codes whose postcodes are left out. Defaults to Northern Ireland "
+                "(licensed separately by LPS, restricting commercial use), the Channel Islands "
+                "and the Isle of Man (Crown Dependencies). Set to [] to load every postcode."
             ),
         ),
         th.Property(
@@ -142,7 +148,7 @@ class TapONSPD(Tap):
                 self,
                 release=self.release,
                 member_pattern=self.config.get("member_pattern", DEFAULT_MEMBER_PATTERN),
-                exclude_countries=self.config.get("exclude_countries", [NORTHERN_IRELAND]),
+                exclude_countries=self.config.get("exclude_countries", DEFAULT_EXCLUDE_COUNTRIES),
             )
         ]
         lookups: dict[str, str] = self.config.get("lookups", DEFAULT_LOOKUPS)

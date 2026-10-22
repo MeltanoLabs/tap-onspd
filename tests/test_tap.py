@@ -56,7 +56,7 @@ def test_sync_emits_records_and_cleans_up(
     messages = run_sync(config, capsys)
 
     postcodes = {r["pcds"]: r for r in records(messages, "postcodes")}
-    assert set(postcodes) == {"SW1A 1AA", "EH1 1YZ", "AB1 0AA"}  # Northern Ireland excluded
+    assert set(postcodes) == {"SW1A 1AA", "EH1 1YZ", "AB1 0AA"}  # NI, Channel Islands, Isle of Man excluded
     london = postcodes["SW1A 1AA"]
     assert london["lat"] == 51.501009
     assert london["lad_cd"] == "E09000033"
@@ -113,7 +113,7 @@ def test_keep_download_and_no_country_filter(
 ) -> None:
     messages = run_sync({**config, "keep_download": True, "exclude_countries": []}, capsys)
 
-    assert len(records(messages, "postcodes")) == 4
+    assert len(records(messages, "postcodes")) == 6
     assert (Path(config["download_dir"]) / ITEM_NAME).exists()
     assert not exit_hooks
 

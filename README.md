@@ -45,6 +45,8 @@ Every record also has `_onspd_release` (e.g. `AUG_2026`), `_onspd_item_id` and `
 
 **County.** ONSPD's county code is only set for two-tier county council areas. Unitary authorities get the pseudo code `E99999999`. Fall back to the local authority if you need a county for every postcode.
 
+**Channel Islands and Isle of Man.** ONSPD also lists postcodes for these Crown Dependencies (`L93000001`, `M83000003`). They are not part of the UK, so the tap leaves them out by default as well.
+
 ## Settings
 
 | Setting | Default | Description |
@@ -52,7 +54,7 @@ Every record also has `_onspd_release` (e.g. `AUG_2026`), `_onspd_item_id` and `
 | `item_id` | latest | ArcGIS item ID of a specific release |
 | `download_dir` | `<tmp>/tap-onspd` | Where the zip is downloaded during a sync |
 | `keep_download` | `false` | Keep the zip after the tap exits, so later runs can reuse it |
-| `exclude_countries` | `["N92000002"]` | Country codes to leave out (default: Northern Ireland, see Licence) |
+| `exclude_countries` | `["N92000002", "L93000001", "M83000003"]` | Country codes to leave out (default: Northern Ireland, see Licence, plus the Channel Islands and Isle of Man) |
 | `member_pattern` | `^Data/ONSPD_[A-Z]{3}_\d{4}_UK\.csv$` | Regex for the main CSV in the zip |
 | `lookups` | the six above | Stream name → regex for a `Documents/` CSV (replaces the defaults) |
 | `strip_vintage_suffixes` | `true` | Drop the vintage year from column names |
@@ -101,7 +103,7 @@ ONSPD is covered by the ONS's own terms, not by the tap's licence. Anyone who lo
 - **Northern Ireland (`BT` postcodes):**
   - NI data is excluded from the free re-use above. It comes with Land & Property Services' Northern Ireland End User Licence, which allows **internal business use only**, and using it counts as accepting those terms.
   - **Commercial use requires a separate licence direct from LPS** (see [LPS copyright, licensing and publishing](https://www.finance-ni.gov.uk/articles/lps-copyright-licensing-and-publishing)).
-  - The tap excludes NI by default (`exclude_countries: ["N92000002"]`). Only set `exclude_countries: []` if your use falls within the End User Licence, or you hold an LPS licence.
+  - The tap excludes NI by default (`N92000002` in `exclude_countries`). Only remove it if your use falls within the End User Licence, or you hold an LPS licence.
 
 ## Development
 
