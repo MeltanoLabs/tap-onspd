@@ -17,9 +17,6 @@ plugins:
     - stream-maps
     - structured-logging
     settings:
-    - name: item_id
-      label: Release item ID
-      description: ArcGIS item ID of a specific ONSPD release. Latest release when omitted.
     - name: download_dir
       label: Download directory
       description: Where the release zip is downloaded during a sync. Defaults to <system temp>/tap-onspd.

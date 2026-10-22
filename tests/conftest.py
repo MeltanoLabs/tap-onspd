@@ -93,7 +93,6 @@ def arcgis() -> Iterator[FakeArcGIS]:
 
     with responses.RequestsMock(assert_all_requests_are_fired=False) as mock:
         mock.add(responses.GET, f"{API_URL}/search", json={"results": [ITEM]})
-        mock.add(responses.GET, f"{API_URL}/content/items/{ITEM_ID}", json=ITEM)
         mock.add_callback(responses.HEAD, DATA_URL, callback=head)
         mock.add_callback(responses.GET, DATA_URL, callback=get)
         yield fake
