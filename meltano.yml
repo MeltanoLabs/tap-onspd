@@ -44,8 +44,6 @@ plugins:
       kind: boolean
       label: Force reload
       value: false
-    - name: api_url
-      label: ArcGIS API URL
     - name: request_timeout
       kind: integer
       label: Request timeout

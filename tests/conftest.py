@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
     from pathlib import Path
 
-API_URL = "https://arcgis.test/sharing/rest"
+API_URL = "https://www.arcgis.com/sharing/rest"
 ITEM_ID = "9e5a92a3cfb14dc7ad43d6ea7a7b8c7f"
 ITEM_NAME = "ONSPD_AUG_2026.zip"
 MODIFIED_MS = 1788775767000  # 2026-09-07T10:09:27Z
@@ -101,9 +101,8 @@ def arcgis() -> Iterator[FakeArcGIS]:
 
 @pytest.fixture
 def config(tmp_path: Path) -> dict:
-    """Tap config pointing at the mocked API and a temp download dir."""
+    """Tap config with a temp download dir."""
     return {
-        "api_url": API_URL,
         "download_dir": str(tmp_path / "downloads"),
         "lookups": {
             "regions": r"^Documents/RGN .*\.csv$",
