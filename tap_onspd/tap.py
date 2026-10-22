@@ -105,13 +105,6 @@ class TapONSPD(Tap):
                 "stable across releases. Columns present in several vintages keep their names."
             ),
         ),
-        th.Property(
-            "force_reload",
-            th.BooleanType(),
-            default=False,
-            title="Force reload",
-            description="Reload the release even if the bookmark shows it was already loaded.",
-        ),
     ).to_dict()
 
     @cached_property

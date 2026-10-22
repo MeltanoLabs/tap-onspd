@@ -16,7 +16,7 @@ Each ONSPD release is published as an ArcGIS Online item (owner `ONSGeography_da
    - Rows are then streamed out of the zip one at a time (`zipfile` + `csv`). **Nothing is extracted to disk**, so memory and disk use stay flat.
 4. **Cleanup.** The zip is deleted when the tap exits, whether the sync succeeded or failed, unless `keep_download` is true.
 
-**Release bookmark.** Every record carries `_onspd_modified_at`, the release's last-modified time, which is used as the replication key. When the bookmark already holds the current release, streams emit nothing and the zip is never downloaded. A scheduled run between releases therefore finishes in seconds. Use `force_reload` to load the release again anyway.
+**Release bookmark.** Every record carries `_onspd_modified_at`, the release's last-modified time, which is used as the replication key. When the bookmark already holds the current release, streams emit nothing and the zip is never downloaded. A scheduled run between releases therefore finishes in seconds. To load the release again, run the tap without `--state`, or with `meltano run --full-refresh`.
 
 ## Streams
 
@@ -58,7 +58,6 @@ Every record also has `_onspd_release` (e.g. `AUG_2026`), `_onspd_item_id` and `
 | `member_pattern` | `^Data/ONSPD_[A-Z]{3}_\d{4}_UK\.csv$` | Regex for the main CSV in the zip |
 | `lookups` | the six above | Stream name → regex for a `Documents/` CSV (replaces the defaults) |
 | `strip_vintage_suffixes` | `true` | Drop the vintage year from column names |
-| `force_reload` | `false` | Ignore the release bookmark |
 
 Run `tap-onspd --about` for the full list, including the SDK's built-in settings.
 
