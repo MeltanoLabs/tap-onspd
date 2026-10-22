@@ -38,8 +38,8 @@ dependencies = [
 name = "Naveen"
 email = "naveen@meltano.com"
 [project.urls]
-Homepage = "https://github.com/meltano/tap-onspd"
-Repository = "https://github.com/meltano/tap-onspd"
+Homepage = "https://github.com/MeltanoLabs/tap-onspd"
+Repository = "https://github.com/MeltanoLabs/tap-onspd"
 [project.scripts]
 # CLI declaration
 tap-onspd = "tap_onspd.tap:TapONSPD.cli"
