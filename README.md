@@ -54,7 +54,6 @@ Every record also has `_onspd_release` (e.g. `AUG_2026`), `_onspd_item_id` and `
 | `download_dir` | `<tmp>/tap-onspd` | Where the zip is downloaded during a sync |
 | `keep_download` | `false` | Keep the zip after the tap exits, so later runs can reuse it |
 | `exclude_countries` | `["N92000002", "L93000001", "M83000003"]` | Country codes to leave out (default: Northern Ireland, see Licence, plus the Channel Islands and Isle of Man) |
-| `member_pattern` | `^Data/ONSPD_[A-Z]{3}_\d{4}_UK\.csv$` | Regex for the main CSV in the zip |
 | `strip_vintage_suffixes` | `true` | Drop the vintage year from column names |
 
 Run `tap-onspd --about` for the full list, including the SDK's built-in settings.

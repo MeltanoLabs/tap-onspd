@@ -28,8 +28,6 @@ plugins:
       kind: array
       label: Exclude countries
       value: [N92000002, L93000001, M83000003]
-    - name: member_pattern
-      label: Postcode file pattern
     - name: strip_vintage_suffixes
       kind: boolean
       label: Strip vintage suffixes
