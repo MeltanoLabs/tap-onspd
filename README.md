@@ -11,8 +11,8 @@ Each ONSPD release is published as an ArcGIS Online item (owner `ONSGeography_da
 1. **Finding the release.** The tap asks the ArcGIS search API for the newest ONSPD item.
 2. **Discovery** needs the CSV headers to build schemas. It reads them straight from the remote zip with HTTP range requests, transferring about 1 MB in total. Nothing is downloaded to disk.
 3. **Sync.**
-   - The zip is downloaded to `tap-onspd` in the system temp directory. It is streamed in 8 MB chunks to `<name>.zip.part`, and an interrupted download resumes with a `Range` request. Once the file is complete and passes a zip check, it is renamed to `<name>.zip`.
-   - A zip of the right size that is already there is reused, so a later run on the same machine does not download it again.
+   - The zip is downloaded to `tap-onspd` in the system temp directory. It is streamed in 8 MB chunks to `<name>.<modified>.zip.part`, where `<modified>` is the item's last-modified time, and an interrupted download resumes with a `Range` request. Once the file is complete and passes a zip check, it is renamed to `<name>.<modified>.zip`.
+   - A zip that is already there is reused, so a later run on the same machine does not download it again. A release that ONS republishes gets a new modified time, so it is downloaded again.
    - Rows are then streamed out of the zip one at a time (`zipfile` + `csv`). **Nothing is extracted to disk**, so memory and disk use stay flat.
 
 **Release bookmark.** Every record carries `_onspd_modified_at`, the release's last-modified time, which is used as the replication key. When the bookmark already holds the current release, streams emit nothing and the zip is never downloaded. A scheduled run between releases therefore finishes in seconds. To load the release again, run the tap without `--state`, or with `meltano run --full-refresh`.

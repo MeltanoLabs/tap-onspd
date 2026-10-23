@@ -9,7 +9,7 @@ import pytest
 from singer_sdk.exceptions import ConfigValidationError
 
 from tap_onspd.tap import TapONSPD
-from tests.conftest import ITEM_ID, ITEM_NAME
+from tests.conftest import ITEM_ID, ZIP_NAME
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -46,7 +46,7 @@ def test_discovery_does_not_download(arcgis: FakeArcGIS, config: dict, download_
     assert set(streams["regions"]["schema"]["properties"]) >= {"rgn_cd", "rgn_nm", "rgn_nmw"}
 
     assert arcgis.full_downloads == 0
-    assert not (download_dir / ITEM_NAME).exists()
+    assert not (download_dir / ZIP_NAME).exists()
 
 
 def test_sync_emits_records_and_keeps_zip(
@@ -81,7 +81,7 @@ def test_sync_emits_records_and_keeps_zip(
     assert arcgis.full_downloads == 1
     for hook in exit_hooks:  # as when the tap process exits
         hook()
-    assert (download_dir / ITEM_NAME).exists()
+    assert (download_dir / ZIP_NAME).exists()
 
     run_sync(config, capsys)
     assert arcgis.full_downloads == 1  # the next run reads the kept zip

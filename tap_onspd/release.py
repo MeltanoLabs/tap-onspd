@@ -225,8 +225,13 @@ class ONSPDRelease:
 
     @property
     def local_path(self) -> Path:
-        """Where the release zip is (or will be) saved."""
-        return self._download_dir / self.info.name
+        """Where the release zip is (or will be) saved.
+
+        The name carries the item's modified time, so a release that ONS republishes
+        under the same name and size is downloaded again.
+        """
+        modified_ms = round(self.info.modified_at.timestamp() * 1000)
+        return self._download_dir / f"{self.info.name.removesuffix('.zip')}.{modified_ms}.zip"
 
     @cached_property
     def remote_zip(self) -> zipfile.ZipFile:
@@ -267,7 +272,6 @@ class ONSPDRelease:
         """
         target = self.local_path
         size = self._remote_size()
-        # ONS occasionally republishes a release under the same name, so the size must match too.
         if target.exists() and target.stat().st_size == size and zipfile.is_zipfile(target):
             self._logger.info("Using cached ONSPD zip %s", target)
             return target

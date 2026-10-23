@@ -11,7 +11,7 @@ import pytest
 import responses
 
 from tap_onspd.release import ONSPDError, ONSPDRelease, find_member
-from tests.conftest import API_URL, ITEM_ID, ITEM_NAME
+from tests.conftest import API_URL, ITEM_ID, ZIP_NAME
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -71,16 +71,25 @@ def test_remote_zip_falls_back_to_download(arcgis: FakeArcGIS, tmp_path: Path) -
 def test_download_saves_zip_and_reuses_cache(arcgis: FakeArcGIS, tmp_path: Path) -> None:
     release = make_release(tmp_path)
     path = release.download()
-    assert path == tmp_path / "dl" / ITEM_NAME
+    assert path == tmp_path / "dl" / ZIP_NAME
     assert path.read_bytes() == arcgis.body
-    assert not path.with_name(f"{ITEM_NAME}.part").exists()
+    assert not path.with_name(f"{ZIP_NAME}.part").exists()
 
     make_release(tmp_path).download()
     assert arcgis.full_downloads == 1
 
 
+def test_download_again_when_release_is_republished(arcgis: FakeArcGIS, tmp_path: Path) -> None:
+    make_release(tmp_path).download()
+    arcgis.modified_ms += 1000
+
+    make_release(tmp_path).download()
+
+    assert arcgis.full_downloads == 2
+
+
 def test_download_replaces_stale_cache(arcgis: FakeArcGIS, tmp_path: Path) -> None:
-    stale = tmp_path / "dl" / ITEM_NAME
+    stale = tmp_path / "dl" / ZIP_NAME
     stale.parent.mkdir(parents=True)
     stale.write_bytes(b"older copy of the release")
     make_release(tmp_path).download()
@@ -88,7 +97,7 @@ def test_download_replaces_stale_cache(arcgis: FakeArcGIS, tmp_path: Path) -> No
 
 
 def test_download_resumes_partial_file(arcgis: FakeArcGIS, tmp_path: Path) -> None:
-    part = tmp_path / "dl" / f"{ITEM_NAME}.part"
+    part = tmp_path / "dl" / f"{ZIP_NAME}.part"
     part.parent.mkdir(parents=True)
     part.write_bytes(arcgis.body[:100])
 
