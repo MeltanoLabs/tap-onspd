@@ -6,13 +6,14 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import pytest
+from singer_sdk.exceptions import ConfigValidationError
+
 from tap_onspd.tap import TapONSPD
 from tests.conftest import ITEM_ID, ITEM_NAME
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    import pytest
 
     from tests.conftest import FakeArcGIS
 
@@ -107,6 +108,17 @@ def test_keep_download_and_no_country_filter(
     assert len(records(messages, "postcodes")) == 6
     assert (Path(config["download_dir"]) / ITEM_NAME).exists()
     assert not exit_hooks
+
+
+def test_exclude_countries_by_name(arcgis: FakeArcGIS, config: dict, capsys: pytest.CaptureFixture[str]) -> None:  # noqa: ARG001
+    messages = run_sync({**config, "exclude_countries": ["england", "scotland"]}, capsys)
+
+    assert {r["pcds"] for r in records(messages, "postcodes")} == {"BT1 1AA", "JE2 3AB", "IM1 1AA"}
+
+
+def test_exclude_countries_rejects_codes(config: dict) -> None:
+    with pytest.raises(ConfigValidationError):
+        TapONSPD(config={**config, "exclude_countries": ["N92000002"]}, parse_env_config=False)
 
 
 def test_vintage_suffixes_kept_when_disabled(arcgis: FakeArcGIS, config: dict) -> None:  # noqa: ARG001

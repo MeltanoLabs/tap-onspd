@@ -28,12 +28,17 @@ LOOKUPS = {
     "wards": r"^Documents/WD .*\.csv$",
     "constituencies": r"^Documents/PCON .*\.csv$",
 }
-NORTHERN_IRELAND = "N92000002"
-CHANNEL_ISLANDS = "L93000001"
-ISLE_OF_MAN = "M83000003"
+COUNTRY_CODES = {
+    "england": "E92000001",
+    "scotland": "S92000003",
+    "wales": "W92000004",
+    "northern_ireland": "N92000002",
+    "channel_islands": "L93000001",
+    "isle_of_man": "M83000003",
+}
 # Northern Ireland postcodes are licensed separately (LPS) and restrict commercial use.
 # The Channel Islands and the Isle of Man are Crown Dependencies, not part of the UK.
-DEFAULT_EXCLUDE_COUNTRIES = [NORTHERN_IRELAND, CHANNEL_ISLANDS, ISLE_OF_MAN]
+DEFAULT_EXCLUDE_COUNTRIES = ["northern_ireland", "channel_islands", "isle_of_man"]
 
 
 class TapONSPD(Tap):
@@ -60,11 +65,11 @@ class TapONSPD(Tap):
         ),
         th.Property(
             "exclude_countries",
-            th.ArrayType(th.StringType()),
+            th.ArrayType(th.StringType(allowed_values=list(COUNTRY_CODES))),
             default=DEFAULT_EXCLUDE_COUNTRIES,
             title="Exclude countries",
             description=(
-                "Country codes whose postcodes are left out. Defaults to Northern Ireland "
+                "Countries whose postcodes are left out. Defaults to Northern Ireland "
                 "(licensed separately by LPS, restricting commercial use), the Channel Islands "
                 "and the Isle of Man (Crown Dependencies). Set to [] to load every postcode."
             ),
@@ -99,7 +104,7 @@ class TapONSPD(Tap):
                 self,
                 release=self.release,
                 member_pattern=POSTCODES_PATTERN,
-                exclude_countries=self.config.get("exclude_countries", DEFAULT_EXCLUDE_COUNTRIES),
+                exclude_countries=[COUNTRY_CODES[country] for country in self.config["exclude_countries"]],
             )
         ]
         streams += [
