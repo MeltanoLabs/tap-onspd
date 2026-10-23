@@ -79,6 +79,7 @@ class ZipCSVStream(Stream):
         self._header = header
         self._raw_names = [cell.strip().lower() for cell in header]
         self._names = normalize_columns(header, strip_vintage=tap.config["strip_vintage_suffixes"])
+        self._raw_by_name = {name: raw for raw, name in zip(self._raw_names, self._names, strict=True) if name}
 
         properties = [
             th.Property(name, column_type(raw))
@@ -111,11 +112,7 @@ class ZipCSVStream(Stream):
             raise ONSPDError(msg)
 
         for row in rows:
-            yield {
-                name: convert_value(raw, value)
-                for raw, name, value in zip(self._raw_names, self._names, row, strict=False)
-                if name is not None
-            }
+            yield {name: value for name, value in zip(self._names, row, strict=False) if name is not None}
 
     @override
     def post_process(self, row: dict[str, Any], context: Context | None = None) -> dict[str, Any] | None:
@@ -123,7 +120,7 @@ class ZipCSVStream(Stream):
             return None
         info = self._release.info
         return {
-            **row,
+            **{name: convert_value(self._raw_by_name[name], value) for name, value in row.items()},
             "_onspd_release": info.label,
             "_onspd_item_id": info.item_id,
             "_onspd_modified_at": info.modified_at.isoformat(),
