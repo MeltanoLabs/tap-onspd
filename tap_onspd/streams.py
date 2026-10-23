@@ -28,6 +28,15 @@ if TYPE_CHECKING:
 
     from tap_onspd.release import ONSPDRelease
 
+COUNTRY_CODES = {
+    "england": "E92000001",
+    "scotland": "S92000003",
+    "wales": "W92000004",
+    "northern_ireland": "N92000002",
+    "channel_islands": "L93000001",
+    "isle_of_man": "M83000003",
+}
+
 _COUNTRY_COLUMN = re.compile(r"^ctry(\d{2})?cd$")
 
 
@@ -69,7 +78,7 @@ class ZipCSVStream(Stream):
         header = next(_read_csv(release.remote_zip, self._member))
         self._header = header
         self._raw_names = [cell.strip().lower() for cell in header]
-        self._names = normalize_columns(header, strip_vintage=tap.config.get("strip_vintage_suffixes", True))
+        self._names = normalize_columns(header, strip_vintage=tap.config["strip_vintage_suffixes"])
 
         properties = [
             th.Property(name, column_type(raw))
@@ -126,21 +135,20 @@ class PostcodesStream(ZipCSVStream):
 
     name = "postcodes"
     primary_keys = ("pcds",)
+    member_pattern = r"^Data/ONSPD_[A-Z]{3}_\d{4}_UK\.csv$"
 
-    def __init__(self, tap: Tap, *, release: ONSPDRelease, member_pattern: str, exclude_countries: list[str]) -> None:
+    def __init__(self, tap: Tap, *, release: ONSPDRelease) -> None:
         """Initialise.
 
         Args:
             tap: The parent tap.
             release: The ONSPD release to read from.
-            member_pattern: Regex matching the main CSV in the zip.
-            exclude_countries: Country codes whose postcodes are dropped.
 
         Raises:
             ONSPDError: If countries are excluded but there is no country column.
         """
-        super().__init__(tap, release=release, member_pattern=member_pattern)
-        self._exclude_countries = set(exclude_countries)
+        super().__init__(tap, release=release, member_pattern=self.member_pattern)
+        self._exclude_countries = {COUNTRY_CODES[country] for country in self.config["exclude_countries"]}
         self._country_column: str | None = None
         if self._exclude_countries:
             matches = [
