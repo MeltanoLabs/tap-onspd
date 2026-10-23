@@ -11,7 +11,7 @@ from singer_sdk import Tap
 from singer_sdk import typing as th
 
 from tap_onspd.release import ONSPDRelease
-from tap_onspd.streams import PostcodesStream, ZipCSVStream
+from tap_onspd.streams import COUNTRY_CODES, PostcodesStream, ZipCSVStream
 
 if sys.version_info >= (3, 12):
     from typing import override
@@ -19,7 +19,6 @@ else:
     from typing_extensions import override
 
 DEFAULT_API_URL = "https://www.arcgis.com/sharing/rest"
-POSTCODES_PATTERN = r"^Data/ONSPD_[A-Z]{3}_\d{4}_UK\.csv$"
 LOOKUPS = {
     "countries": r"^Documents/CTRY .*\.csv$",
     "regions": r"^Documents/RGN .*\.csv$",
@@ -27,14 +26,6 @@ LOOKUPS = {
     "local_authorities": r"^Documents/LAD .*\.csv$",
     "wards": r"^Documents/WD .*\.csv$",
     "constituencies": r"^Documents/PCON .*\.csv$",
-}
-COUNTRY_CODES = {
-    "england": "E92000001",
-    "scotland": "S92000003",
-    "wales": "W92000004",
-    "northern_ireland": "N92000002",
-    "channel_islands": "L93000001",
-    "isle_of_man": "M83000003",
 }
 # Northern Ireland postcodes are licensed separately (LPS) and restrict commercial use.
 # The Channel Islands and the Isle of Man are Crown Dependencies, not part of the UK.
@@ -82,14 +73,7 @@ class TapONSPD(Tap):
 
     @override
     def discover_streams(self) -> list[ZipCSVStream]:
-        streams: list[ZipCSVStream] = [
-            PostcodesStream(
-                self,
-                release=self.release,
-                member_pattern=POSTCODES_PATTERN,
-                exclude_countries=[COUNTRY_CODES[country] for country in self.config["exclude_countries"]],
-            )
-        ]
+        streams: list[ZipCSVStream] = [PostcodesStream(self, release=self.release)]
         streams += [
             ZipCSVStream(self, name=name, release=self.release, member_pattern=pattern)
             for name, pattern in LOOKUPS.items()
