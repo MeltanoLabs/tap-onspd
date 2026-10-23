@@ -45,6 +45,7 @@ class TapONSPD(Tap):
     """Singer tap for the ONS Postcode Directory."""
 
     name = "tap-onspd"
+    dynamic_catalog = True
 
     config_jsonschema = th.PropertiesList(
         th.Property(
