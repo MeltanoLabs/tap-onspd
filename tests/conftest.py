@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import dataclasses
 import io
+import json
 import re
+import tempfile
 import zipfile
 from typing import TYPE_CHECKING
 
@@ -19,6 +21,7 @@ API_URL = "https://www.arcgis.com/sharing/rest"
 ITEM_ID = "9e5a92a3cfb14dc7ad43d6ea7a7b8c7f"
 ITEM_NAME = "ONSPD_AUG_2026.zip"
 MODIFIED_MS = 1788775767000  # 2026-09-07T10:09:27Z
+ZIP_NAME = f"ONSPD_AUG_2026.{MODIFIED_MS}.zip"
 DATA_URL = f"{API_URL}/content/items/{ITEM_ID}/data"
 
 POSTCODES_CSV = (
@@ -64,6 +67,7 @@ class FakeArcGIS:
     """Records how the release zip was fetched."""
 
     body: bytes
+    modified_ms: int = MODIFIED_MS
     full_downloads: int = 0
     range_requests: list[str] = dataclasses.field(default_factory=list)
     supports_ranges: bool = True
@@ -96,23 +100,32 @@ def arcgis() -> Iterator[FakeArcGIS]:
         return 200, {"Content-Length": str(len(fake.body))}, fake.body
 
     with responses.RequestsMock(assert_all_requests_are_fired=False) as mock:
-        mock.add(responses.GET, f"{API_URL}/search", json={"results": [ITEM]})
+        mock.add_callback(
+            responses.GET,
+            f"{API_URL}/search",
+            callback=lambda _request: (200, {}, json.dumps({"results": [{**ITEM, "modified": fake.modified_ms}]})),
+        )
         mock.add_callback(responses.HEAD, DATA_URL, callback=head)
         mock.add_callback(responses.GET, DATA_URL, callback=get)
         yield fake
 
 
 @pytest.fixture
-def config(tmp_path: Path) -> dict:
-    """Tap config with a temp download dir."""
-    return {
-        "download_dir": str(tmp_path / "downloads"),
-    }
+def config() -> dict:
+    """Tap config with the defaults."""
+    return {}
+
+
+@pytest.fixture(autouse=True)
+def download_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Move the system temp directory, where the tap keeps the release zip, into the test's directory."""
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    return tmp_path / "tap-onspd"
 
 
 @pytest.fixture(autouse=True)
 def exit_hooks(monkeypatch: pytest.MonkeyPatch) -> list[Callable[[], None]]:
     """Capture atexit registrations instead of running them at interpreter exit."""
     hooks: list[Callable[[], None]] = []
-    monkeypatch.setattr("tap_onspd.release.atexit.register", hooks.append)
+    monkeypatch.setattr("atexit.register", hooks.append)
     return hooks

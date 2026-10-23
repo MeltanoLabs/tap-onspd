@@ -17,13 +17,6 @@ plugins:
     - stream-maps
     - structured-logging
     settings:
-    - name: download_dir
-      label: Download directory
-      description: Where the release zip is downloaded during a sync. Defaults to <system temp>/tap-onspd.
-    - name: keep_download
-      kind: boolean
-      label: Keep download
-      value: false
     - name: exclude_countries
       kind: array
       label: Exclude countries
@@ -32,9 +25,6 @@ plugins:
       kind: boolean
       label: Strip vintage suffixes
       value: true
-    config:
-      download_dir: .meltano/tap-onspd
-      keep_download: true
   loaders:
   - name: target-jsonl
     variant: andyh1203

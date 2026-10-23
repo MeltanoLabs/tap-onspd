@@ -3,13 +3,12 @@
 Each ONSPD release is an ArcGIS Online item (owner ``ONSGeography_data``, tag
 ``PRD_ONSPD``) whose data is a ~250 MB zip. Discovery only needs the CSV
 headers, so it reads the zip remotely with HTTP range requests (~1 MB). A sync
-downloads the whole zip once to ``download_dir`` and streams rows out of it
-without extracting anything to disk.
+downloads the whole zip once to ``download_dir``, keeps it for later runs, and
+streams rows out of it without extracting anything to disk.
 """
 
 from __future__ import annotations
 
-import atexit
 import dataclasses
 import datetime as dt
 import io
@@ -169,7 +168,7 @@ class HttpRangeFile(io.RawIOBase):
 class ONSPDRelease:
     """Resolves an ONSPD release and provides access to its zip."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         *,
         api_url: str,
@@ -177,7 +176,6 @@ class ONSPDRelease:
         logger: logging.Logger,
         timeout: float = 120,
         session: requests.Session | None = None,
-        delete_on_exit: bool = False,
     ) -> None:
         """Initialise.
 
@@ -187,14 +185,12 @@ class ONSPDRelease:
             logger: Logger for progress messages.
             timeout: HTTP read timeout in seconds.
             session: HTTP session (a retrying one is created when omitted).
-            delete_on_exit: Delete the downloaded zip when the process exits.
         """
         self._api_url = api_url.rstrip("/")
         self._download_dir = download_dir
         self._logger = logger
         self._timeout = timeout
         self._session = session or build_session()
-        self._delete_on_exit = delete_on_exit
         self._local_zip: zipfile.ZipFile | None = None
 
     @cached_property
@@ -229,8 +225,13 @@ class ONSPDRelease:
 
     @property
     def local_path(self) -> Path:
-        """Where the release zip is (or will be) saved."""
-        return self._download_dir / self.info.name
+        """Where the release zip is (or will be) saved.
+
+        The name carries the item's modified time, so a release that ONS republishes
+        under the same name and size is downloaded again.
+        """
+        modified_ms = round(self.info.modified_at.timestamp() * 1000)
+        return self._download_dir / f"{self.info.name.removesuffix('.zip')}.{modified_ms}.zip"
 
     @cached_property
     def remote_zip(self) -> zipfile.ZipFile:
@@ -254,10 +255,6 @@ class ONSPDRelease:
         if self._local_zip is None:
             self.download()
             self._local_zip = zipfile.ZipFile(self.local_path)
-            # The SDK has no hook after the last stream syncs (Tap.sync_all is final),
-            # so the zip is removed when the tap process exits.
-            if self._delete_on_exit:
-                atexit.register(self.cleanup)
         return self._local_zip
 
     def download(self) -> Path:
@@ -275,7 +272,6 @@ class ONSPDRelease:
         """
         target = self.local_path
         size = self._remote_size()
-        # ONS occasionally republishes a release under the same name, so the size must match too.
         if target.exists() and target.stat().st_size == size and zipfile.is_zipfile(target):
             self._logger.info("Using cached ONSPD zip %s", target)
             return target
@@ -301,15 +297,6 @@ class ONSPDRelease:
         part.replace(target)
         self._logger.info("Downloaded %s", target)
         return target
-
-    def cleanup(self) -> None:
-        """Close and delete the downloaded zip."""
-        if self._local_zip is not None:
-            self._local_zip.close()
-            self._local_zip = None
-        if self.local_path.exists():
-            self.local_path.unlink()
-            self._logger.info("Deleted %s", self.local_path)
 
     def _remote_size(self) -> int:
         response = self._session.head(self.download_url, allow_redirects=True, timeout=self._timeout)
