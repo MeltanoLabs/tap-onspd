@@ -80,7 +80,6 @@ convention = "google"
 select = [ "ALL" ]
 ignore = [
   "COM812", # missing-trailing-comma
-  "CPY001", # copyright notice missing
   "FIX",    # allow TODO comments
 ]
 future-annotations = true
