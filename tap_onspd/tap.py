@@ -19,7 +19,7 @@ else:
     from typing_extensions import override
 
 DEFAULT_API_URL = "https://www.arcgis.com/sharing/rest"
-DEFAULT_MEMBER_PATTERN = r"^Data/ONSPD_[A-Z]{3}_\d{4}_UK\.csv$"
+POSTCODES_PATTERN = r"^Data/ONSPD_[A-Z]{3}_\d{4}_UK\.csv$"
 LOOKUPS = {
     "countries": r"^Documents/CTRY .*\.csv$",
     "regions": r"^Documents/RGN .*\.csv$",
@@ -70,13 +70,6 @@ class TapONSPD(Tap):
             ),
         ),
         th.Property(
-            "member_pattern",
-            th.StringType(),
-            default=DEFAULT_MEMBER_PATTERN,
-            title="Postcode file pattern",
-            description="Regex matching the main UK postcode CSV inside the release zip.",
-        ),
-        th.Property(
             "strip_vintage_suffixes",
             th.BooleanType(),
             default=True,
@@ -105,7 +98,7 @@ class TapONSPD(Tap):
             PostcodesStream(
                 self,
                 release=self.release,
-                member_pattern=self.config.get("member_pattern", DEFAULT_MEMBER_PATTERN),
+                member_pattern=POSTCODES_PATTERN,
                 exclude_countries=self.config.get("exclude_countries", DEFAULT_EXCLUDE_COUNTRIES),
             )
         ]
