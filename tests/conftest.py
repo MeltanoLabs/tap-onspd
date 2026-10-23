@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
     from pathlib import Path
 
-API_URL = "https://arcgis.test/sharing/rest"
+API_URL = "https://www.arcgis.com/sharing/rest"
 ITEM_ID = "9e5a92a3cfb14dc7ad43d6ea7a7b8c7f"
 ITEM_NAME = "ONSPD_AUG_2026.zip"
 MODIFIED_MS = 1788775767000  # 2026-09-07T10:09:27Z
@@ -49,6 +49,10 @@ def build_zip() -> bytes:
         zf.writestr("Data/multi_csv/ONSPD_AUG_2026_UK_SW.csv", POSTCODES_CSV)
         zf.writestr("Data/ONSPD_AUG_2026_UK.csv", POSTCODES_CSV)
         zf.writestr("Data/ONSPD_AUG_2026_UK.txt", POSTCODES_CSV)
+        zf.writestr("Documents/CTRY Country names and codes UK as at 05_25.csv", "CTRY25CD,CTRY25NM\n")
+        zf.writestr("Documents/CTY County names and codes UK as at 05_25.csv", "CTY25CD,CTY25NM\n")
+        zf.writestr("Documents/LAD Local Authority District names and codes UK as at 04_25.csv", "LAD25CD,LAD25NM\n")
+        zf.writestr("Documents/PCON Constituency names and codes UK as at 12_24.csv", "PCON24CD,PCON24NM\n")
         zf.writestr("Documents/RGN Region names and codes EN as at 05_25.csv", REGIONS_CSV)
         zf.writestr("Documents/WD Ward names and codes UK as at 05_25.csv", WARDS_OLD_CSV)
         zf.writestr("Documents/WD Ward names and codes UK as at 05_26.csv", WARDS_NEW_CSV)
@@ -94,7 +98,6 @@ def arcgis() -> Iterator[FakeArcGIS]:
 
     with responses.RequestsMock(assert_all_requests_are_fired=False) as mock:
         mock.add(responses.GET, f"{API_URL}/search", json={"results": [ITEM]})
-        mock.add(responses.GET, f"{API_URL}/content/items/{ITEM_ID}", json=ITEM)
         mock.add_callback(responses.HEAD, DATA_URL, callback=head)
         mock.add_callback(responses.GET, DATA_URL, callback=get)
         yield fake
@@ -102,14 +105,8 @@ def arcgis() -> Iterator[FakeArcGIS]:
 
 @pytest.fixture
 def config() -> dict:
-    """Tap config pointing at the mocked API."""
-    return {
-        "api_url": API_URL,
-        "lookups": {
-            "regions": r"^Documents/RGN .*\.csv$",
-            "wards": r"^Documents/WD .*\.csv$",
-        },
-    }
+    """Tap config with the defaults."""
+    return {}
 
 
 @pytest.fixture(autouse=True)

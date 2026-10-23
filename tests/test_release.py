@@ -46,10 +46,6 @@ def test_resolves_latest_release(arcgis: FakeArcGIS, tmp_path: Path) -> None:  #
     assert info.modified_at == dt.datetime(2026, 9, 7, 10, 9, 27, tzinfo=dt.timezone.utc)
 
 
-def test_pinned_item_uses_item_endpoint(arcgis: FakeArcGIS, tmp_path: Path) -> None:  # noqa: ARG001
-    assert make_release(tmp_path, item_id=ITEM_ID).info.name == ITEM_NAME
-
-
 def test_arcgis_error_payload_raises(tmp_path: Path) -> None:
     with responses.RequestsMock() as mock:
         mock.add(responses.GET, f"{API_URL}/search", json={"error": {"code": 400, "message": "bad query"}})

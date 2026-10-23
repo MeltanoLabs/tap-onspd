@@ -19,8 +19,8 @@ else:
     from typing_extensions import override
 
 DEFAULT_API_URL = "https://www.arcgis.com/sharing/rest"
-DEFAULT_MEMBER_PATTERN = r"^Data/ONSPD_[A-Z]{3}_\d{4}_UK\.csv$"
-DEFAULT_LOOKUPS = {
+POSTCODES_PATTERN = r"^Data/ONSPD_[A-Z]{3}_\d{4}_UK\.csv$"
+LOOKUPS = {
     "countries": r"^Documents/CTRY .*\.csv$",
     "regions": r"^Documents/RGN .*\.csv$",
     "counties": r"^Documents/CTY .*\.csv$",
@@ -28,12 +28,17 @@ DEFAULT_LOOKUPS = {
     "wards": r"^Documents/WD .*\.csv$",
     "constituencies": r"^Documents/PCON .*\.csv$",
 }
-NORTHERN_IRELAND = "N92000002"
-CHANNEL_ISLANDS = "L93000001"
-ISLE_OF_MAN = "M83000003"
+COUNTRY_CODES = {
+    "england": "E92000001",
+    "scotland": "S92000003",
+    "wales": "W92000004",
+    "northern_ireland": "N92000002",
+    "channel_islands": "L93000001",
+    "isle_of_man": "M83000003",
+}
 # Northern Ireland postcodes are licensed separately (LPS) and restrict commercial use.
 # The Channel Islands and the Isle of Man are Crown Dependencies, not part of the UK.
-DEFAULT_EXCLUDE_COUNTRIES = [NORTHERN_IRELAND, CHANNEL_ISLANDS, ISLE_OF_MAN]
+DEFAULT_EXCLUDE_COUNTRIES = ["northern_ireland", "channel_islands", "isle_of_man"]
 
 
 class TapONSPD(Tap):
@@ -43,40 +48,14 @@ class TapONSPD(Tap):
 
     config_jsonschema = th.PropertiesList(
         th.Property(
-            "item_id",
-            th.StringType(),
-            title="Release item ID",
-            description=(
-                "ArcGIS item ID of a specific ONSPD release to load. "
-                "When omitted, the latest release is found and loaded."
-            ),
-        ),
-        th.Property(
             "exclude_countries",
-            th.ArrayType(th.StringType()),
+            th.ArrayType(th.StringType(allowed_values=list(COUNTRY_CODES))),
             default=DEFAULT_EXCLUDE_COUNTRIES,
             title="Exclude countries",
             description=(
-                "Country codes whose postcodes are left out. Defaults to Northern Ireland "
+                "Countries whose postcodes are left out. Defaults to Northern Ireland "
                 "(licensed separately by LPS, restricting commercial use), the Channel Islands "
                 "and the Isle of Man (Crown Dependencies). Set to [] to load every postcode."
-            ),
-        ),
-        th.Property(
-            "member_pattern",
-            th.StringType(),
-            default=DEFAULT_MEMBER_PATTERN,
-            title="Postcode file pattern",
-            description="Regex matching the main UK postcode CSV inside the release zip.",
-        ),
-        th.Property(
-            "lookups",
-            th.ObjectType(additional_properties=th.StringType()),
-            default=DEFAULT_LOOKUPS,
-            title="Lookup streams",
-            description=(
-                "Map of stream name to a regex matching a code-to-name lookup CSV in the zip's "
-                "`Documents/` folder. Replaces the default set."
             ),
         ),
         th.Property(
@@ -89,38 +68,15 @@ class TapONSPD(Tap):
                 "stable across releases. Columns present in several vintages keep their names."
             ),
         ),
-        th.Property(
-            "force_reload",
-            th.BooleanType(),
-            default=False,
-            title="Force reload",
-            description="Reload the release even if the bookmark shows it was already loaded.",
-        ),
-        th.Property(
-            "api_url",
-            th.StringType(),
-            default=DEFAULT_API_URL,
-            title="ArcGIS API URL",
-            description="ArcGIS Online sharing REST API base URL.",
-        ),
-        th.Property(
-            "request_timeout",
-            th.NumberType(),
-            default=120,
-            title="Request timeout",
-            description="HTTP read timeout in seconds.",
-        ),
     ).to_dict()
 
     @cached_property
     def release(self) -> ONSPDRelease:
         """The ONSPD release this run loads."""
         return ONSPDRelease(
-            api_url=self.config.get("api_url", DEFAULT_API_URL),
+            api_url=DEFAULT_API_URL,
             download_dir=Path(tempfile.gettempdir()) / "tap-onspd",
             logger=self.logger,
-            item_id=self.config.get("item_id"),
-            timeout=self.config.get("request_timeout", 120),
         )
 
     @override
@@ -129,14 +85,13 @@ class TapONSPD(Tap):
             PostcodesStream(
                 self,
                 release=self.release,
-                member_pattern=self.config.get("member_pattern", DEFAULT_MEMBER_PATTERN),
-                exclude_countries=self.config.get("exclude_countries", DEFAULT_EXCLUDE_COUNTRIES),
+                member_pattern=POSTCODES_PATTERN,
+                exclude_countries=[COUNTRY_CODES[country] for country in self.config["exclude_countries"]],
             )
         ]
-        lookups: dict[str, str] = self.config.get("lookups", DEFAULT_LOOKUPS)
         streams += [
             ZipCSVStream(self, name=name, release=self.release, member_pattern=pattern)
-            for name, pattern in lookups.items()
+            for name, pattern in LOOKUPS.items()
         ]
         return streams
 

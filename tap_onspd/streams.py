@@ -106,7 +106,7 @@ class ZipCSVStream(Stream):
     def get_records(self, context: Context | None) -> Iterable[dict[str, Any]]:
         info = self._release.info
         bookmark = self.get_starting_replication_key_value(context)
-        if bookmark and not self.config.get("force_reload", False):
+        if bookmark:
             loaded = dt.datetime.fromisoformat(str(bookmark).replace("Z", "+00:00"))
             if loaded >= info.modified_at:
                 self.logger.info("Release %s already loaded; skipping %s", info.label, self.name)

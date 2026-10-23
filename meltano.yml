@@ -17,31 +17,14 @@ plugins:
     - stream-maps
     - structured-logging
     settings:
-    - name: item_id
-      label: Release item ID
-      description: ArcGIS item ID of a specific ONSPD release. Latest release when omitted.
     - name: exclude_countries
       kind: array
       label: Exclude countries
-      value: [N92000002, L93000001, M83000003]
-    - name: member_pattern
-      label: Postcode file pattern
-    - name: lookups
-      kind: object
-      label: Lookup streams
+      value: [northern_ireland, channel_islands, isle_of_man]
     - name: strip_vintage_suffixes
       kind: boolean
       label: Strip vintage suffixes
       value: true
-    - name: force_reload
-      kind: boolean
-      label: Force reload
-      value: false
-    - name: api_url
-      label: ArcGIS API URL
-    - name: request_timeout
-      kind: integer
-      label: Request timeout
   loaders:
   - name: target-jsonl
     variant: andyh1203

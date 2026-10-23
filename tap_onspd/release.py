@@ -168,13 +168,12 @@ class HttpRangeFile(io.RawIOBase):
 class ONSPDRelease:
     """Resolves an ONSPD release and provides access to its zip."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         *,
         api_url: str,
         download_dir: Path,
         logger: logging.Logger,
-        item_id: str | None = None,
         timeout: float = 120,
         session: requests.Session | None = None,
     ) -> None:
@@ -184,36 +183,31 @@ class ONSPDRelease:
             api_url: ArcGIS sharing REST API base URL.
             download_dir: Directory the zip is downloaded to.
             logger: Logger for progress messages.
-            item_id: Pin a specific release; the latest is used when omitted.
             timeout: HTTP read timeout in seconds.
             session: HTTP session (a retrying one is created when omitted).
         """
         self._api_url = api_url.rstrip("/")
         self._download_dir = download_dir
         self._logger = logger
-        self._item_id = item_id
         self._timeout = timeout
         self._session = session or build_session()
         self._local_zip: zipfile.ZipFile | None = None
 
     @cached_property
     def info(self) -> ReleaseInfo:
-        """The release to load: the pinned item, or the newest ONSPD release.
+        """The newest ONSPD release.
 
         Raises:
             ONSPDError: If the release cannot be found.
         """
-        if self._item_id:
-            item = self._get_json(f"{self._api_url}/content/items/{self._item_id}", {"f": "json"})
-        else:
-            results = self._get_json(
-                f"{self._api_url}/search",
-                {"q": SEARCH_QUERY, "sortField": "created", "sortOrder": "desc", "num": 1, "f": "json"},
-            ).get("results", [])
-            if not results:
-                msg = "No ONSPD release found on ArcGIS Online"
-                raise ONSPDError(msg)
-            item = results[0]
+        results = self._get_json(
+            f"{self._api_url}/search",
+            {"q": SEARCH_QUERY, "sortField": "created", "sortOrder": "desc", "num": 1, "f": "json"},
+        ).get("results", [])
+        if not results:
+            msg = "No ONSPD release found on ArcGIS Online"
+            raise ONSPDError(msg)
+        item = results[0]
 
         info = ReleaseInfo(
             item_id=item["id"],

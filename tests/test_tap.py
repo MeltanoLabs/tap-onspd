@@ -5,6 +5,9 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
+import pytest
+from singer_sdk.exceptions import ConfigValidationError
+
 from tap_onspd.tap import TapONSPD
 from tests.conftest import ITEM_ID, ITEM_NAME
 
@@ -12,11 +15,10 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    import pytest
-
     from tests.conftest import FakeArcGIS
 
 MODIFIED_AT = "2026-09-07T10:09:27+00:00"
+STREAMS = ("postcodes", "countries", "regions", "counties", "local_authorities", "wards", "constituencies")
 
 
 def run_sync(config: dict, capsys: pytest.CaptureFixture[str], state: dict | None = None) -> list[dict]:
@@ -33,7 +35,7 @@ def test_discovery_does_not_download(arcgis: FakeArcGIS, config: dict, download_
     catalog = TapONSPD(config=config, parse_env_config=False).catalog_dict
     streams = {s["tap_stream_id"]: s for s in catalog["streams"]}
 
-    assert set(streams) == {"postcodes", "regions", "wards"}
+    assert set(streams) == set(STREAMS)
     postcodes = streams["postcodes"]
     assert postcodes["key_properties"] == ["pcds"]
     assert postcodes["replication_key"] == "_onspd_modified_at"
@@ -81,7 +83,7 @@ def test_sync_emits_records_and_keeps_zip(
         hook()
     assert (download_dir / ITEM_NAME).exists()
 
-    run_sync({**config, "force_reload": True}, capsys)
+    run_sync(config, capsys)
     assert arcgis.full_downloads == 1  # the next run reads the kept zip
 
 
@@ -89,22 +91,12 @@ def test_sync_skips_release_already_loaded(
     arcgis: FakeArcGIS, config: dict, capsys: pytest.CaptureFixture[str]
 ) -> None:
     bookmark = {"replication_key": "_onspd_modified_at", "replication_key_value": MODIFIED_AT}
-    state = {"bookmarks": dict.fromkeys(("postcodes", "regions", "wards"), bookmark)}
+    state = {"bookmarks": dict.fromkeys(STREAMS, bookmark)}
 
     messages = run_sync(config, capsys, state=state)
 
     assert not [m for m in messages if m["type"] == "RECORD"]
     assert arcgis.full_downloads == 0
-
-
-def test_force_reload_ignores_bookmark(arcgis: FakeArcGIS, config: dict, capsys: pytest.CaptureFixture[str]) -> None:
-    bookmark = {"replication_key": "_onspd_modified_at", "replication_key_value": MODIFIED_AT}
-    state = {"bookmarks": {"postcodes": bookmark}}
-
-    messages = run_sync({**config, "force_reload": True}, capsys, state=state)
-
-    assert len(records(messages, "postcodes")) == 3
-    assert arcgis.full_downloads == 1
 
 
 def test_no_country_filter(
@@ -115,6 +107,17 @@ def test_no_country_filter(
     messages = run_sync({**config, "exclude_countries": []}, capsys)
 
     assert len(records(messages, "postcodes")) == 6
+
+
+def test_exclude_countries_by_name(arcgis: FakeArcGIS, config: dict, capsys: pytest.CaptureFixture[str]) -> None:  # noqa: ARG001
+    messages = run_sync({**config, "exclude_countries": ["england", "scotland"]}, capsys)
+
+    assert {r["pcds"] for r in records(messages, "postcodes")} == {"BT1 1AA", "JE2 3AB", "IM1 1AA"}
+
+
+def test_exclude_countries_rejects_codes(config: dict) -> None:
+    with pytest.raises(ConfigValidationError):
+        TapONSPD(config={**config, "exclude_countries": ["N92000002"]}, parse_env_config=False)
 
 
 def test_vintage_suffixes_kept_when_disabled(arcgis: FakeArcGIS, config: dict) -> None:  # noqa: ARG001
