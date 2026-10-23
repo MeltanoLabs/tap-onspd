@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Meltano.
+
 """End-to-end tests of discovery and sync against the mocked release."""
 
 from __future__ import annotations

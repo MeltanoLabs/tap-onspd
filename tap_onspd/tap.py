@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Meltano.
+
 """ONSPD tap class."""
 
 from __future__ import annotations

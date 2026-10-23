@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Meltano.
+
 """Column naming and typing for ONSPD CSV files."""
 
 from __future__ import annotations

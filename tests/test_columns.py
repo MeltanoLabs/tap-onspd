@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Meltano.
+
 """Tests for column naming and typing."""
 
 from __future__ import annotations
