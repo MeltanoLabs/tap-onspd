@@ -53,7 +53,7 @@ Every record also has `_onspd_release` (e.g. `AUG_2026`), `_onspd_item_id` and `
 |:--|:--|:--|
 | `download_dir` | `<tmp>/tap-onspd` | Where the zip is downloaded during a sync |
 | `keep_download` | `false` | Keep the zip after the tap exits, so later runs can reuse it |
-| `exclude_countries` | `["N92000002", "L93000001", "M83000003"]` | Country codes to leave out (default: Northern Ireland, see Licence, plus the Channel Islands and Isle of Man) |
+| `exclude_countries` | `["northern_ireland", "channel_islands", "isle_of_man"]` | Countries to leave out, from `england`, `scotland`, `wales`, `northern_ireland`, `channel_islands` and `isle_of_man` (default: Northern Ireland, see Licence, plus the Channel Islands and Isle of Man) |
 | `strip_vintage_suffixes` | `true` | Drop the vintage year from column names |
 
 Run `tap-onspd --about` for the full list, including the SDK's built-in settings.
@@ -97,7 +97,7 @@ ONSPD is covered by the ONS's own terms, not by the tap's licence. Anyone who lo
 - **Northern Ireland (`BT` postcodes):**
   - NI data is excluded from the free re-use above. It comes with Land & Property Services' Northern Ireland End User Licence, which allows **internal business use only**, and using it counts as accepting those terms.
   - **Commercial use requires a separate licence direct from LPS** (see [LPS copyright, licensing and publishing](https://www.finance-ni.gov.uk/articles/lps-copyright-licensing-and-publishing)).
-  - The tap excludes NI by default (`N92000002` in `exclude_countries`). Only remove it if your use falls within the End User Licence, or you hold an LPS licence.
+  - The tap excludes NI by default (`northern_ireland` in `exclude_countries`). Only remove it if your use falls within the End User Licence, or you hold an LPS licence.
 
 ## Development
 

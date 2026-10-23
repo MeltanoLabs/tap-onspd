@@ -27,7 +27,7 @@ plugins:
     - name: exclude_countries
       kind: array
       label: Exclude countries
-      value: [N92000002, L93000001, M83000003]
+      value: [northern_ireland, channel_islands, isle_of_man]
     - name: strip_vintage_suffixes
       kind: boolean
       label: Strip vintage suffixes
