@@ -16,6 +16,8 @@ on:
     - tests/**
     - pyproject.toml
     - uv.lock
+  schedule:
+  - cron: 0 9 * * *
   workflow_dispatch:
 
 concurrency:
@@ -58,11 +60,30 @@ jobs:
       uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Restore the ONSPD release zip
+      id: restore
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: /tmp/tap-onspd
+        key: onspd-
+        restore-keys: onspd-
     - name: Run Tox
       env:
         TOXENV: ${{ matrix.python-version }}
       run: |
         uvx --with=tox-uv tox
+    - name: Keep only the newest ONSPD release zip
+      id: zip
+      working-directory: /tmp/tap-onspd
+      run: |
+        ls -t | tail -n +2 | xargs -r rm --
+        echo "key=onspd-$(ls)" >> "$GITHUB_OUTPUT"
+    - name: Save the ONSPD release zip
+      if: steps.zip.outputs.key != steps.restore.outputs.cache-matched-key
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: /tmp/tap-onspd
+        key: ${{ steps.zip.outputs.key }}
 
   typing:
     name: Type Checking
