@@ -21,9 +21,11 @@ MODIFIED_AT = "2026-09-07T10:09:27+00:00"
 STREAMS = ("postcodes", "countries", "regions", "counties", "local_authorities", "wards", "constituencies")
 
 
-def run_sync(config: dict, capsys: pytest.CaptureFixture[str], state: dict | None = None) -> list[dict]:
+def run_sync(
+    config: dict, capsys: pytest.CaptureFixture[str], state: dict | None = None, catalog: dict | None = None
+) -> list[dict]:
     capsys.readouterr()
-    TapONSPD(config=config, state=state, parse_env_config=False).sync_all()
+    TapONSPD(config=config, state=state, catalog=catalog, parse_env_config=False).sync_all()
     return [json.loads(line) for line in capsys.readouterr().out.splitlines() if line.strip()]
 
 
@@ -37,12 +39,12 @@ def test_discovery_does_not_download(arcgis: FakeArcGIS, config: dict, download_
 
     assert set(streams) == set(STREAMS)
     postcodes = streams["postcodes"]
-    assert postcodes["key_properties"] == ["pcds"]
+    assert postcodes["key_properties"] == ("pcds",)
     assert postcodes["replication_key"] == "_onspd_modified_at"
     props = postcodes["schema"]["properties"]
     assert {"lad_cd", "rgn_cd", "ctry_cd", "oa11cd", "oa21cd", "imd25ind", "lep_cd1"} <= set(props)
     assert props["lat"]["type"] == ["number", "null"]
-    assert streams["regions"]["key_properties"] == ["rgn_cd"]
+    assert streams["regions"]["key_properties"] == ("rgn_cd",)
     assert set(streams["regions"]["schema"]["properties"]) >= {"rgn_cd", "rgn_nm", "rgn_nmw"}
 
     assert arcgis.full_downloads == 0
@@ -97,6 +99,36 @@ def test_sync_skips_release_already_loaded(
 
     assert not [m for m in messages if m["type"] == "RECORD"]
     assert arcgis.full_downloads == 0
+
+
+def test_sync_keeps_records_when_catalog_key_is_not_a_column(
+    arcgis: FakeArcGIS,  # noqa: ARG001
+    config: dict,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    catalog = TapONSPD(config=config, parse_env_config=False).catalog_dict
+    regions = next(s for s in catalog["streams"] if s["tap_stream_id"] == "regions")
+    regions["key_properties"] = ["_onspd_release", "rgn_cd"]
+
+    messages = run_sync(config, capsys, catalog=catalog)
+
+    assert [r["rgn_nm"] for r in records(messages, "regions")] == ["London"]
+
+
+def test_sync_writes_release_time_when_catalog_has_no_replication_key(
+    arcgis: FakeArcGIS,  # noqa: ARG001
+    config: dict,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    catalog = TapONSPD(config=config, parse_env_config=False).catalog_dict
+    postcodes = next(s for s in catalog["streams"] if s["tap_stream_id"] == "postcodes")
+    postcodes["replication_method"] = "FULL_TABLE"
+    postcodes["replication_key"] = None
+    next(m for m in postcodes["metadata"] if m["breadcrumb"] == [])["metadata"]["replication-key"] = None
+
+    messages = run_sync(config, capsys, catalog=catalog)
+
+    assert {r["_onspd_modified_at"] for r in records(messages, "postcodes")} == {MODIFIED_AT}
 
 
 def test_no_country_filter(
