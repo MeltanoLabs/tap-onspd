@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Meltano.
+
 """Tests for release discovery and download."""
 
 from __future__ import annotations

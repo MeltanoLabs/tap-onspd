@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Meltano.
+
 """Tests standard tap features against the live ONSPD release, using the built-in SDK tests library."""
 
 import pytest

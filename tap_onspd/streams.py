@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Meltano.
+
 """Stream types for tap-onspd."""
 
 from __future__ import annotations

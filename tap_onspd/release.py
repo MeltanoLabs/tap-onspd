@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Meltano.
+
 """ONSPD release discovery, download and zip access.
 
 Each ONSPD release is an ArcGIS Online item (owner ``ONSGeography_data``, tag

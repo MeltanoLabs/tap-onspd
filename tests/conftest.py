@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Meltano.
+
 """Fixtures: a miniature ONSPD release zip served by a mocked ArcGIS API."""
 
 from __future__ import annotations
