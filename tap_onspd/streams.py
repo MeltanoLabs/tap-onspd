@@ -118,13 +118,12 @@ class ZipCSVStream(Stream):
     def post_process(self, row: dict[str, Any], context: Context | None = None) -> dict[str, Any] | None:
         if not row.get(self._key):
             return None
+        record = {name: convert_value(self._raw_by_name[name], value) for name, value in row.items()}
         info = self._release.info
-        return {
-            **{name: convert_value(self._raw_by_name[name], value) for name, value in row.items()},
-            "_onspd_release": info.label,
-            "_onspd_item_id": info.item_id,
-            "_onspd_modified_at": info.modified_at.isoformat(),
-        }
+        record["_onspd_release"] = info.label
+        record["_onspd_item_id"] = info.item_id
+        record["_onspd_modified_at"] = info.modified_at.isoformat()
+        return record
 
 
 class PostcodesStream(ZipCSVStream):
