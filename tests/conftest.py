@@ -48,6 +48,10 @@ def build_zip() -> bytes:
         zf.writestr("Data/multi_csv/ONSPD_AUG_2026_UK_SW.csv", POSTCODES_CSV)
         zf.writestr("Data/ONSPD_AUG_2026_UK.csv", POSTCODES_CSV)
         zf.writestr("Data/ONSPD_AUG_2026_UK.txt", POSTCODES_CSV)
+        zf.writestr("Documents/CTRY Country names and codes UK as at 05_25.csv", "CTRY25CD,CTRY25NM\n")
+        zf.writestr("Documents/CTY County names and codes UK as at 05_25.csv", "CTY25CD,CTY25NM\n")
+        zf.writestr("Documents/LAD Local Authority District names and codes UK as at 04_25.csv", "LAD25CD,LAD25NM\n")
+        zf.writestr("Documents/PCON Constituency names and codes UK as at 12_24.csv", "PCON24CD,PCON24NM\n")
         zf.writestr("Documents/RGN Region names and codes EN as at 05_25.csv", REGIONS_CSV)
         zf.writestr("Documents/WD Ward names and codes UK as at 05_25.csv", WARDS_OLD_CSV)
         zf.writestr("Documents/WD Ward names and codes UK as at 05_26.csv", WARDS_NEW_CSV)
@@ -103,10 +107,6 @@ def config(tmp_path: Path) -> dict:
     """Tap config with a temp download dir."""
     return {
         "download_dir": str(tmp_path / "downloads"),
-        "lookups": {
-            "regions": r"^Documents/RGN .*\.csv$",
-            "wards": r"^Documents/WD .*\.csv$",
-        },
     }
 
 

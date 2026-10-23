@@ -20,7 +20,7 @@ else:
 
 DEFAULT_API_URL = "https://www.arcgis.com/sharing/rest"
 DEFAULT_MEMBER_PATTERN = r"^Data/ONSPD_[A-Z]{3}_\d{4}_UK\.csv$"
-DEFAULT_LOOKUPS = {
+LOOKUPS = {
     "countries": r"^Documents/CTRY .*\.csv$",
     "regions": r"^Documents/RGN .*\.csv$",
     "counties": r"^Documents/CTY .*\.csv$",
@@ -77,16 +77,6 @@ class TapONSPD(Tap):
             description="Regex matching the main UK postcode CSV inside the release zip.",
         ),
         th.Property(
-            "lookups",
-            th.ObjectType(additional_properties=th.StringType()),
-            default=DEFAULT_LOOKUPS,
-            title="Lookup streams",
-            description=(
-                "Map of stream name to a regex matching a code-to-name lookup CSV in the zip's "
-                "`Documents/` folder. Replaces the default set."
-            ),
-        ),
-        th.Property(
             "strip_vintage_suffixes",
             th.BooleanType(),
             default=True,
@@ -119,10 +109,9 @@ class TapONSPD(Tap):
                 exclude_countries=self.config.get("exclude_countries", DEFAULT_EXCLUDE_COUNTRIES),
             )
         ]
-        lookups: dict[str, str] = self.config.get("lookups", DEFAULT_LOOKUPS)
         streams += [
             ZipCSVStream(self, name=name, release=self.release, member_pattern=pattern)
-            for name, pattern in lookups.items()
+            for name, pattern in LOOKUPS.items()
         ]
         return streams
 

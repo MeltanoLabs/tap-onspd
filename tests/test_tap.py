@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from tests.conftest import FakeArcGIS
 
 MODIFIED_AT = "2026-09-07T10:09:27+00:00"
+STREAMS = ("postcodes", "countries", "regions", "counties", "local_authorities", "wards", "constituencies")
 
 
 def run_sync(config: dict, capsys: pytest.CaptureFixture[str], state: dict | None = None) -> list[dict]:
@@ -33,7 +34,7 @@ def test_discovery_does_not_download(arcgis: FakeArcGIS, config: dict) -> None:
     catalog = TapONSPD(config=config, parse_env_config=False).catalog_dict
     streams = {s["tap_stream_id"]: s for s in catalog["streams"]}
 
-    assert set(streams) == {"postcodes", "regions", "wards"}
+    assert set(streams) == set(STREAMS)
     postcodes = streams["postcodes"]
     assert postcodes["key_properties"] == ["pcds"]
     assert postcodes["replication_key"] == "_onspd_modified_at"
@@ -87,7 +88,7 @@ def test_sync_skips_release_already_loaded(
     arcgis: FakeArcGIS, config: dict, capsys: pytest.CaptureFixture[str]
 ) -> None:
     bookmark = {"replication_key": "_onspd_modified_at", "replication_key_value": MODIFIED_AT}
-    state = {"bookmarks": dict.fromkeys(("postcodes", "regions", "wards"), bookmark)}
+    state = {"bookmarks": dict.fromkeys(STREAMS, bookmark)}
 
     messages = run_sync(config, capsys, state=state)
 
