@@ -24,11 +24,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-
 env:
   FORCE_COLOR: 1
+
+permissions:
+  contents: read  # read repository contents
 
 jobs:
   build-package:
@@ -45,7 +45,7 @@ jobs:
         id: baipp
 
   pytest:
-    name: Integration
+    name: Test
     needs: [build-package]
     runs-on: ubuntu-latest
     strategy:
@@ -57,7 +57,7 @@ jobs:
       with:
         persist-credentials: false
     - name: Setup uv
-      uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
       with:
         python-version: ${{ matrix.python-version }}
     - name: Restore the ONSPD release zip
@@ -68,10 +68,8 @@ jobs:
         key: onspd-
         restore-keys: onspd-
     - name: Run Tox
-      env:
-        TOXENV: ${{ matrix.python-version }}
-      run: |
-        uvx --with=tox-uv tox
+      run: | # zizmor: ignore[template-injection]
+        uvx --with=tox-uv tox -e ${{ matrix.python-version }}
     - name: Keep only the newest ONSPD release zip
       id: zip
       working-directory: /tmp/tap-onspd
@@ -93,7 +91,10 @@ jobs:
       with:
         persist-credentials: false
     - name: Setup uv
-      uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
     - name: Run Tox
-      run: |
-        uvx --with=tox-uv tox -e typing
+      run: >
+        uvx
+        --managed-python
+        --with=tox-uv
+        tox -e typing
