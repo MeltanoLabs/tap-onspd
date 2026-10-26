@@ -110,7 +110,6 @@ required-version = ">=0.16.0"
 future-annotations = true
 ignore = [
     "COM812",  # missing-trailing-comma
-    "FIX",  # allow TODO comments
 ]
 select = ["ALL"]
 
@@ -121,7 +120,6 @@ allow-star-arg-any = true
 "tests/**/*.py" = [
   "S101",  # assert
   "PLR2004",  # magic-value-comparison
-  "SLF001",  # tests poke at private helpers
   "D",  # test names describe the behaviour
 ]
 
