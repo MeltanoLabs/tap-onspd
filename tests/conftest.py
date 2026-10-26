@@ -19,6 +19,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
     from pathlib import Path
 
+    import requests
+
 API_URL = "https://www.arcgis.com/sharing/rest"
 ITEM_ID = "9e5a92a3cfb14dc7ad43d6ea7a7b8c7f"
 ITEM_NAME = "ONSPD_AUG_2026.zip"
@@ -54,10 +56,17 @@ def build_zip() -> bytes:
         zf.writestr("Data/multi_csv/ONSPD_AUG_2026_UK_SW.csv", POSTCODES_CSV)
         zf.writestr("Data/ONSPD_AUG_2026_UK.csv", POSTCODES_CSV)
         zf.writestr("Data/ONSPD_AUG_2026_UK.txt", POSTCODES_CSV)
-        zf.writestr("Documents/CTRY Country names and codes UK as at 05_25.csv", "CTRY25CD,CTRY25NM\n")
+        zf.writestr(
+            "Documents/CTRY Country names and codes UK as at 05_25.csv", "CTRY25CD,CTRY25NM\n"
+        )
         zf.writestr("Documents/CTY County names and codes UK as at 05_25.csv", "CTY25CD,CTY25NM\n")
-        zf.writestr("Documents/LAD Local Authority District names and codes UK as at 04_25.csv", "LAD25CD,LAD25NM\n")
-        zf.writestr("Documents/PCON Constituency names and codes UK as at 12_24.csv", "PCON24CD,PCON24NM\n")
+        zf.writestr(
+            "Documents/LAD Local Authority District names and codes UK as at 04_25.csv",
+            "LAD25CD,LAD25NM\n",
+        )
+        zf.writestr(
+            "Documents/PCON Constituency names and codes UK as at 12_24.csv", "PCON24CD,PCON24NM\n"
+        )
         zf.writestr("Documents/RGN Region names and codes EN as at 05_25.csv", REGIONS_CSV)
         zf.writestr("Documents/WD Ward names and codes UK as at 05_25.csv", WARDS_OLD_CSV)
         zf.writestr("Documents/WD Ward names and codes UK as at 05_26.csv", WARDS_NEW_CSV)
@@ -76,7 +85,12 @@ class FakeArcGIS:
     supports_ranges: bool = True
 
 
-ITEM = {"id": ITEM_ID, "name": ITEM_NAME, "title": "ONS Postcode Directory (August 2026)", "modified": MODIFIED_MS}
+ITEM = {
+    "id": ITEM_ID,
+    "name": ITEM_NAME,
+    "title": "ONS Postcode Directory (August 2026)",
+    "modified": MODIFIED_MS,
+}
 
 
 @pytest.fixture
@@ -90,8 +104,8 @@ def arcgis() -> Iterator[FakeArcGIS]:
             headers["Accept-Ranges"] = "bytes"
         return 200, headers, b""
 
-    def get(request: object) -> tuple[int, dict, bytes]:
-        range_header = request.headers.get("Range")  # type: ignore[attr-defined]
+    def get(request: requests.PreparedRequest) -> tuple[int, dict, bytes]:
+        range_header = request.headers.get("Range")
         if range_header and fake.supports_ranges:
             fake.range_requests.append(range_header)
             match = re.fullmatch(r"bytes=(\d+)-(\d*)", range_header)
@@ -106,7 +120,11 @@ def arcgis() -> Iterator[FakeArcGIS]:
         mock.add_callback(
             responses.GET,
             f"{API_URL}/search",
-            callback=lambda _request: (200, {}, json.dumps({"results": [{**ITEM, "modified": fake.modified_ms}]})),
+            callback=lambda _request: (
+                200,
+                {},
+                json.dumps({"results": [{**ITEM, "modified": fake.modified_ms}]}),
+            ),
         )
         mock.add_callback(responses.HEAD, DATA_URL, callback=head)
         mock.add_callback(responses.GET, DATA_URL, callback=get)
@@ -121,7 +139,7 @@ def config() -> dict:
 
 @pytest.fixture(autouse=True)
 def download_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Move the system temp directory, where the tap keeps the release zip, into the test's directory."""
+    """Move the system temp directory, which holds the release zip, into the test's directory."""
     monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
     return tmp_path / "tap-onspd"
 
