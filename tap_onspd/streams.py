@@ -81,7 +81,9 @@ class ZipCSVStream(Stream):
         self._header = header
         self._raw_names = [cell.strip().lower() for cell in header]
         self._names = normalize_columns(header, strip_vintage=tap.config["strip_vintage_suffixes"])
-        self._raw_by_name = {name: raw for raw, name in zip(self._raw_names, self._names, strict=True) if name}
+        self._raw_by_name = {
+            name: raw for raw, name in zip(self._raw_names, self._names, strict=True) if name
+        }
 
         properties = [
             th.Property(name, column_type(raw))
@@ -89,9 +91,17 @@ class ZipCSVStream(Stream):
             if name is not None
         ]
         properties += [
-            th.Property("_onspd_release", th.StringType(), description="Release label, e.g. AUG_2026"),
-            th.Property("_onspd_item_id", th.StringType(), description="ArcGIS item id of the release"),
-            th.Property("_onspd_modified_at", th.DateTimeType(), description="Last-modified time of the release"),
+            th.Property(
+                "_onspd_release", th.StringType(), description="Release label, e.g. AUG_2026"
+            ),
+            th.Property(
+                "_onspd_item_id", th.StringType(), description="ArcGIS item id of the release"
+            ),
+            th.Property(
+                "_onspd_modified_at",
+                th.DateTimeType(),
+                description="Last-modified time of the release",
+            ),
         ]
         super().__init__(tap, schema=th.PropertiesList(*properties).to_dict(), name=name)
 
@@ -114,10 +124,16 @@ class ZipCSVStream(Stream):
             raise ONSPDError(msg)
 
         for row in rows:
-            yield {name: value for name, value in zip(self._names, row, strict=False) if name is not None}
+            yield {
+                name: value
+                for name, value in zip(self._names, row, strict=False)
+                if name is not None
+            }
 
     @override
-    def post_process(self, row: dict[str, Any], context: Context | None = None) -> dict[str, Any] | None:
+    def post_process(
+        self, row: dict[str, Any], context: Context | None = None
+    ) -> dict[str, Any] | None:
         if not row.get(self._key):
             return None
         for name, value in row.items():
@@ -147,11 +163,15 @@ class PostcodesStream(ZipCSVStream):
             ONSPDError: If countries are excluded but there is no country column.
         """
         super().__init__(tap, release=release, member_pattern=self.member_pattern)
-        self._exclude_countries = {COUNTRY_CODES[country] for country in self.config["exclude_countries"]}
+        self._exclude_countries = {
+            COUNTRY_CODES[country] for country in self.config["exclude_countries"]
+        }
         self._country_column: str | None = None
         if self._exclude_countries:
             matches = [
-                name for raw, name in zip(self._raw_names, self._names, strict=True) if _COUNTRY_COLUMN.match(raw)
+                name
+                for raw, name in zip(self._raw_names, self._names, strict=True)
+                if _COUNTRY_COLUMN.match(raw)
             ]
             if not matches:
                 msg = "exclude_countries is set but the ONSPD file has no country code column"
@@ -159,7 +179,9 @@ class PostcodesStream(ZipCSVStream):
             self._country_column = matches[0]
 
     @override
-    def post_process(self, row: dict[str, Any], context: Context | None = None) -> dict[str, Any] | None:
+    def post_process(
+        self, row: dict[str, Any], context: Context | None = None
+    ) -> dict[str, Any] | None:
         if self._country_column and row.get(self._country_column) in self._exclude_countries:
             return None
         return super().post_process(row, context)

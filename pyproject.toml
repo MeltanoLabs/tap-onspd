@@ -103,7 +103,7 @@ testpaths = [
 ]
 
 [tool.ruff]
-line-length = 120
+line-length = 100
 required-version = ">=0.16.0"
 
 [tool.ruff.lint]

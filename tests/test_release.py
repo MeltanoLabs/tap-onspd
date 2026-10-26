@@ -33,7 +33,10 @@ def test_find_member_prefers_latest_as_at_date() -> None:
         "Documents/IMD lookup EN as at 12_25.csv",
         "Documents/IMD lookup WA as at 12_25.csv",
     ]
-    assert find_member(names, r"^Documents/IMD lookup EN .*\.csv$") == "Documents/IMD lookup EN as at 12_25.csv"
+    assert (
+        find_member(names, r"^Documents/IMD lookup EN .*\.csv$")
+        == "Documents/IMD lookup EN as at 12_25.csv"
+    )
 
 
 def test_find_member_lists_files_when_nothing_matches() -> None:
@@ -50,7 +53,11 @@ def test_resolves_latest_release(arcgis: FakeArcGIS, tmp_path: Path) -> None:  #
 
 def test_arcgis_error_payload_raises(tmp_path: Path) -> None:
     with responses.RequestsMock() as mock:
-        mock.add(responses.GET, f"{API_URL}/search", json={"error": {"code": 400, "message": "bad query"}})
+        mock.add(
+            responses.GET,
+            f"{API_URL}/search",
+            json={"error": {"code": 400, "message": "bad query"}},
+        )
         with pytest.raises(ONSPDError, match="bad query"):
             _ = make_release(tmp_path).info
 

@@ -21,12 +21,24 @@ def test_strips_vintage_from_unique_columns() -> None:
 
 def test_keeps_vintage_when_names_would_collide() -> None:
     header = ["oa11cd", "oa21cd", "imd20ind", "imd25ind", "pcon24cd"]
-    assert normalize_columns(header, strip_vintage=True) == ["oa11cd", "oa21cd", "imd20ind", "imd25ind", "pcon_cd"]
+    assert normalize_columns(header, strip_vintage=True) == [
+        "oa11cd",
+        "oa21cd",
+        "imd20ind",
+        "imd25ind",
+        "pcon_cd",
+    ]
 
 
 def test_lowercases_lookup_headers_and_drops_blank_columns() -> None:
     header = ["RGN25CD", "RGN25NM", "RGN25NMW", "", " "]
-    assert normalize_columns(header, strip_vintage=True) == ["rgn_cd", "rgn_nm", "rgn_nmw", None, None]
+    assert normalize_columns(header, strip_vintage=True) == [
+        "rgn_cd",
+        "rgn_nm",
+        "rgn_nmw",
+        None,
+        None,
+    ]
 
 
 def test_strip_vintage_disabled() -> None:

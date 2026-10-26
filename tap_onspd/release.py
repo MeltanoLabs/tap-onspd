@@ -132,7 +132,10 @@ class HttpRangeFile(io.RawIOBase):
         super().__init__()
         response = session.head(url, allow_redirects=True, timeout=timeout)
         response.raise_for_status()
-        if response.headers.get("Accept-Ranges") != "bytes" or "Content-Length" not in response.headers:
+        if (
+            response.headers.get("Accept-Ranges") != "bytes"
+            or "Content-Length" not in response.headers
+        ):
             msg = f"{url} does not support range requests"
             raise RangeNotSupportedError(msg)
         self._session = session
@@ -230,7 +233,9 @@ class ONSPDRelease:
             title=item["title"],
             modified_at=dt.datetime.fromtimestamp(item["modified"] / 1000, tz=dt.timezone.utc),
         )
-        self._logger.info("ONSPD release: %s (item %s, modified %s)", info.title, info.item_id, info.modified_at)
+        self._logger.info(
+            "ONSPD release: %s (item %s, modified %s)", info.title, info.item_id, info.modified_at
+        )
         return info
 
     @property
@@ -257,7 +262,9 @@ class ONSPDRelease:
         try:
             raw = HttpRangeFile(self._session, self.download_url, self._timeout)
         except RangeNotSupportedError:
-            self._logger.warning("Range requests not supported; downloading the full zip for discovery")
+            self._logger.warning(
+                "Range requests not supported; downloading the full zip for discovery"
+            )
             return self.local_zip()
         return zipfile.ZipFile(io.BufferedReader(raw, buffer_size=RANGE_BUFFER_SIZE))
 
@@ -299,7 +306,11 @@ class ONSPDRelease:
             try:
                 self._download_to(part, size)
                 break
-            except (requests.ConnectionError, requests.Timeout, requests.exceptions.ChunkedEncodingError) as exc:
+            except (
+                requests.ConnectionError,
+                requests.Timeout,
+                requests.exceptions.ChunkedEncodingError,
+            ) as exc:
                 if attempt == MAX_DOWNLOAD_ATTEMPTS:
                     raise
                 wait = min(2**attempt, 60)
@@ -314,7 +325,9 @@ class ONSPDRelease:
         return target
 
     def _remote_size(self) -> int:
-        response = self._session.head(self.download_url, allow_redirects=True, timeout=self._timeout)
+        response = self._session.head(
+            self.download_url, allow_redirects=True, timeout=self._timeout
+        )
         response.raise_for_status()
         return int(response.headers["Content-Length"])
 

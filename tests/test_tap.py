@@ -20,11 +20,22 @@ if TYPE_CHECKING:
     from tests.conftest import FakeArcGIS
 
 MODIFIED_AT = "2026-09-07T10:09:27+00:00"
-STREAMS = ("postcodes", "countries", "regions", "counties", "local_authorities", "wards", "constituencies")
+STREAMS = (
+    "postcodes",
+    "countries",
+    "regions",
+    "counties",
+    "local_authorities",
+    "wards",
+    "constituencies",
+)
 
 
 def run_sync(
-    config: dict, capsys: pytest.CaptureFixture[str], state: dict | None = None, catalog: dict | None = None
+    config: dict,
+    capsys: pytest.CaptureFixture[str],
+    state: dict | None = None,
+    catalog: dict | None = None,
 ) -> list[dict]:
     capsys.readouterr()
     TapONSPD(config=config, state=state, catalog=catalog, parse_env_config=False).sync_all()
@@ -63,7 +74,11 @@ def test_sync_emits_records_and_keeps_zip(
     messages = run_sync(config, capsys)
 
     postcodes = {r["pcds"]: r for r in records(messages, "postcodes")}
-    assert set(postcodes) == {"SW1A 1AA", "EH1 1YZ", "AB1 0AA"}  # NI, Channel Islands, Isle of Man excluded
+    assert set(postcodes) == {
+        "SW1A 1AA",
+        "EH1 1YZ",
+        "AB1 0AA",
+    }  # NI, Channel Islands, Isle of Man excluded
     london = postcodes["SW1A 1AA"]
     assert london["lat"] == 51.501009
     assert london["lad_cd"] == "E09000033"
@@ -126,7 +141,9 @@ def test_sync_writes_release_time_when_catalog_has_no_replication_key(
     postcodes = next(s for s in catalog["streams"] if s["tap_stream_id"] == "postcodes")
     postcodes["replication_method"] = "FULL_TABLE"
     postcodes["replication_key"] = None
-    next(m for m in postcodes["metadata"] if m["breadcrumb"] == [])["metadata"]["replication-key"] = None
+    next(m for m in postcodes["metadata"] if m["breadcrumb"] == [])["metadata"][
+        "replication-key"
+    ] = None
 
     messages = run_sync(config, capsys, catalog=catalog)
 
@@ -143,7 +160,11 @@ def test_no_country_filter(
     assert len(records(messages, "postcodes")) == 6
 
 
-def test_exclude_countries_by_name(arcgis: FakeArcGIS, config: dict, capsys: pytest.CaptureFixture[str]) -> None:  # noqa: ARG001
+def test_exclude_countries_by_name(
+    arcgis: FakeArcGIS,  # noqa: ARG001
+    config: dict,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     messages = run_sync({**config, "exclude_countries": ["england", "scotland"]}, capsys)
 
     assert {r["pcds"] for r in records(messages, "postcodes")} == {"BT1 1AA", "JE2 3AB", "IM1 1AA"}
@@ -155,6 +176,8 @@ def test_exclude_countries_rejects_codes(config: dict) -> None:
 
 
 def test_vintage_suffixes_kept_when_disabled(arcgis: FakeArcGIS, config: dict) -> None:  # noqa: ARG001
-    catalog = TapONSPD(config={**config, "strip_vintage_suffixes": False}, parse_env_config=False).catalog_dict
+    catalog = TapONSPD(
+        config={**config, "strip_vintage_suffixes": False}, parse_env_config=False
+    ).catalog_dict
     postcodes = next(s for s in catalog["streams"] if s["tap_stream_id"] == "postcodes")
     assert "lad26cd" in postcodes["schema"]["properties"]
