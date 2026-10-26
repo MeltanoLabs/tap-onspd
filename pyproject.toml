@@ -33,7 +33,7 @@ classifiers = [
 dynamic = [ "version" ]
 dependencies = [
   "requests~=2.34.0",
-  "singer-sdk~=0.54.0",
+  "singer-sdk~=0.54.9",
   "typing-extensions>=4.5; python_version<'3.12'",
 ]
 [[project.authors]]
@@ -51,11 +51,14 @@ dev = [
   { include-group = "test" },
 ]
 test = [
-  "pytest>=8",
+  "pytest>=9",
+  "pytest-github-actions-annotate-failures>=0.4",
   "responses>=0.25",
+  "singer-sdk[testing]",
 ]
 typing = [
-  "mypy>=1.15",
+  "mypy>=2.1",
+  "ty>=0.0.41",
   "types-requests>=2.32",
 ]
 
@@ -65,6 +68,7 @@ fallback-version = "0.1.0.dev0"
 
 [tool.ruff]
 line-length = 120
+required-version = ">=0.16.0"
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
   "S101",    # assert is used by pytest
@@ -85,28 +89,49 @@ ignore = [
 future-annotations = true
 
 [tool.mypy]
+enable_error_code = [
+  "ignore-without-code",
+  "redundant-expr",
+  "truthy-bool",
+]
 warn_redundant_casts = true
 warn_unused_ignores = true
 warn_unreachable = true
 warn_unused_configs = true
 
-[tool.pytest.ini_options]
-addopts = "-v -ra --strict-markers"
-testpaths = [ "tests" ]
+[tool.ty.rules]
+missing-override-decorator = "error"
+unused-type-ignore-comment = "ignore"
+
+[tool.pytest]
+addopts = [ "-ra" ]
+filterwarnings = [
+  "error",
+  "once:No records were available to test:UserWarning",
+  "once:Fields in transformed catalog but not in records:UserWarning",
+  "once:Python 3.* its end of life:FutureWarning",
+]
 log_level = "INFO"
+minversion = "9"
+strict = true
+testpaths = [ "tests" ]
 
 [tool.tox]
 requires = [
-  "tox>=4.24",
-  "tox-uv",
+  "tox>=4.53",
+  "tox-uv>=1.35",
 ]
-env_list = [ "typing", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15" ]
+env_list = [ "typing", { prefix = "3.", start = 10 } ]
 [tool.tox.env.typing]
-description = "type checks with mypy"
+description = "type checks"
 dependency_groups = [ "test", "typing" ]
-commands = [ [ "mypy", { replace = "posargs", default = [ "tap_onspd", "tests" ], extend = true } ] ]
+commands = [
+  [ "mypy", { replace = "posargs", default = [ "tap_onspd", "tests" ], extend = true } ],
+  [ "ty", "check", { replace = "posargs", default = [ "tap_onspd", "tests" ], extend = true } ],
+]
 [tool.tox.env_run_base]
 runner = "uv-venv-lock-runner"
 description = "run tests on Python {env_name}"
+pass_env = [ "CI", "GITHUB_*", "TAP_ONSPD_*" ]
 dependency_groups = [ "test" ]
 commands = [ [ "pytest", { replace = "posargs", default = [ "tests" ], extend = true } ] ]

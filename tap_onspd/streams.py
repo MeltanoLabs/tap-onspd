@@ -91,7 +91,7 @@ class ZipCSVStream(Stream):
         properties += [
             th.Property("_onspd_release", th.StringType(), description="Release label, e.g. AUG_2026"),
             th.Property("_onspd_item_id", th.StringType(), description="ArcGIS item id of the release"),
-            th.Property(self.replication_key, th.DateTimeType(), description="Last-modified time of the release"),
+            th.Property("_onspd_modified_at", th.DateTimeType(), description="Last-modified time of the release"),
         ]
         super().__init__(tap, schema=th.PropertiesList(*properties).to_dict(), name=name)
 

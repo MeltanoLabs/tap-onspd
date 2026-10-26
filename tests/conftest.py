@@ -19,6 +19,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
     from pathlib import Path
 
+    import requests
+
 API_URL = "https://www.arcgis.com/sharing/rest"
 ITEM_ID = "9e5a92a3cfb14dc7ad43d6ea7a7b8c7f"
 ITEM_NAME = "ONSPD_AUG_2026.zip"
@@ -90,8 +92,8 @@ def arcgis() -> Iterator[FakeArcGIS]:
             headers["Accept-Ranges"] = "bytes"
         return 200, headers, b""
 
-    def get(request: object) -> tuple[int, dict, bytes]:
-        range_header = request.headers.get("Range")  # type: ignore[attr-defined]
+    def get(request: requests.PreparedRequest) -> tuple[int, dict, bytes]:
+        range_header = request.headers.get("Range")
         if range_header and fake.supports_ranges:
             fake.range_requests.append(range_header)
             match = re.fullmatch(r"bytes=(\d+)-(\d*)", range_header)

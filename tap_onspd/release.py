@@ -15,6 +15,7 @@ import dataclasses
 import datetime as dt
 import io
 import re
+import sys
 import time
 import zipfile
 from functools import cached_property
@@ -23,6 +24,12 @@ from typing import TYPE_CHECKING
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
+if sys.version_info >= (3, 12):
+    from collections.abc import Buffer
+    from typing import override
+else:
+    from typing_extensions import Buffer, override
 
 if TYPE_CHECKING:
     import logging
@@ -134,24 +141,30 @@ class HttpRangeFile(io.RawIOBase):
         self._size = int(response.headers["Content-Length"])
         self._pos = 0
 
-    def readable(self) -> bool:  # noqa: D102
+    @override
+    def readable(self) -> bool:
         return True
 
-    def seekable(self) -> bool:  # noqa: D102
+    @override
+    def seekable(self) -> bool:
         return True
 
-    def tell(self) -> int:  # noqa: D102
+    @override
+    def tell(self) -> int:
         return self._pos
 
-    def seek(self, offset: int, whence: int = io.SEEK_SET) -> int:  # noqa: D102
+    @override
+    def seek(self, offset: int, whence: int = io.SEEK_SET) -> int:
         base = {io.SEEK_SET: 0, io.SEEK_CUR: self._pos, io.SEEK_END: self._size}[whence]
         self._pos = base + offset
         return self._pos
 
-    def readinto(self, buffer: bytearray | memoryview) -> int:  # type: ignore[override]  # noqa: D102
-        if self._pos >= self._size or len(buffer) == 0:
+    @override
+    def readinto(self, buffer: Buffer) -> int:
+        view = memoryview(buffer)
+        if self._pos >= self._size or view.nbytes == 0:
             return 0
-        end = min(self._pos + len(buffer), self._size) - 1
+        end = min(self._pos + view.nbytes, self._size) - 1
         response = self._session.get(
             self._url,
             headers={"Range": f"bytes={self._pos}-{end}"},
@@ -162,7 +175,7 @@ class HttpRangeFile(io.RawIOBase):
             msg = f"{self._url} ignored the range request"
             raise RangeNotSupportedError(msg)
         data = response.content
-        buffer[: len(data)] = data
+        view[: len(data)] = data
         self._pos += len(data)
         return len(data)
 

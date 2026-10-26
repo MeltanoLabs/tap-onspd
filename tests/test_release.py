@@ -23,8 +23,8 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger("test")
 
 
-def make_release(tmp_path: Path, **kwargs: object) -> ONSPDRelease:
-    return ONSPDRelease(api_url=API_URL, download_dir=tmp_path / "dl", logger=LOGGER, **kwargs)  # type: ignore[arg-type]
+def make_release(tmp_path: Path) -> ONSPDRelease:
+    return ONSPDRelease(api_url=API_URL, download_dir=tmp_path / "dl", logger=LOGGER)
 
 
 def test_find_member_prefers_latest_as_at_date() -> None:
